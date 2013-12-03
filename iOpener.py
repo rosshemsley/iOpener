@@ -183,7 +183,7 @@ class path_mangler():
                 return sep
 
         directory, filename = split(path)
-        files = os.listdir(expanduser(directory))    
+        files = listdir(expanduser(directory))    
         completion = path_mangler.path_complete(filename, files)[len(filename):]
 
         if (len(completion) == 0): 
