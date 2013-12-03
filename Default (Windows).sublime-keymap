@@ -1,0 +1,19 @@
+[
+    {
+        "keys": ["tab"],
+        "command": "i_opener_complete",
+        "context": [{"key": "i_opener"}]
+    },
+    {
+        "keys": ["up"],
+        "command": "i_opener_cycle_history",
+        "context": [{"key": "i_opener"}],
+        "args": {"direction": "up"}
+    },
+    {
+        "keys": ["down"],
+        "command": "i_opener_cycle_history",
+        "context": [{"key": "i_opener"}],
+        "args": {"direction": "down"}
+    }   
+]
