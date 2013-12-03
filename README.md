@@ -1,11 +1,8 @@
 iOpener
 =======
 
-iOpener is a Sublime Text 3 plugin to add Emacs-like file opening, features
-include:
-- Auto-completion 
-- Directory listing completion with fuzzy matching 
-- History of previously opened files.
+Emulate Emacs' find-file. With completion, listings and history. A Plugin
+written for Sublime Text 3.
 
 Use
 ---
