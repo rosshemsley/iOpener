@@ -1,4 +1,6 @@
 [
+    { "keys": ["ctrl+o"], "command": "i_opener" },
+
     {
         "keys": ["tab"],
         "command": "i_opener_complete",
