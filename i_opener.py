@@ -143,7 +143,7 @@ class Input_Panel():
             new_path = join(directory, self.path_cache[i])            
             
             if (isdir(expanduser(new_path))):
-                new_path = new_path + os.sep
+                new_path = new_path + sep
             
             self.set_text(new_path)
             self.path_cache = None
@@ -179,18 +179,18 @@ class path_mangler():
 
         # We complete directories by simply adding a '/'
         if isdir(expanduser(path)):
-            if len(path)>0 and path[-1]!= os.sep:
-                return os.sep
+            if len(path)>0 and path[-1]!= sep:
+                return sep
 
         directory, filename = split(path)
-        files = os.listdir(expanduser(directory))    
+        files = listdir(expanduser(directory))    
         completion = path_mangler.path_complete(filename, files)[len(filename):]
 
         if (len(completion) == 0): 
             return ""
         
         if isdir(expanduser(path+completion)):
-            return completion + os.sep
+            return completion + sep
         else:
             return completion
 
@@ -212,9 +212,9 @@ class path_mangler():
         if data and len(data["folders"]) == 1:
             here = data["folders"][0]["path"]            
         elif(view != None and view.file_name() != None): 
-            here = split(view.file_name())[0] + os.sep
+            here = split(view.file_name())[0] + sep
         else:
-            here = "~" + os.sep
+            here = "~" + sep
                 
         # Return path relative to home if applicable.
         if len(commonprefix([home, here])) > 1:
