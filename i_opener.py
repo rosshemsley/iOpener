@@ -11,8 +11,6 @@ from os      import listdir, sep
 # Here is where we store hsitory
 HISTORY_FILE    = 'i_opener_history.sublime-settings'
 HISTORY_ENTRIES = 30
-HISTORY_ENABLED = True
-
 #------------------------------------------------------------------------------#
 # This class encapsulates the behaviours relating to the file open panel
 # used by the plugin.
@@ -68,8 +66,7 @@ class Input_Panel():
 
     #----------------------------------------------------------------------#
 
-    def add_to_history(self,path):
-        print ("adding", path, "to history")
+    def add_to_history(self,path):        
         file_history, history_settings = self.get_history()
         file_history = file_history[-(HISTORY_ENTRIES-1):]
         file_history.append(path)     
@@ -82,7 +79,6 @@ class Input_Panel():
         history_settings = sublime.load_settings(HISTORY_FILE)
         file_history     = history_settings.get("file_history")
         if not file_history: file_history = []
-        print ("loaded history: ", file_history)
         return file_history, history_settings        
     
     #----------------------------------------------------------------------#
@@ -102,6 +98,11 @@ class Input_Panel():
     # Open the given path. Can be a directory OR a file.
 
     def open_file(self, path):
+        self.add_to_history(path)
+
+        # For cross-platform compatibility, make sure '~' is removed.
+        path = expanduser(path)
+
         if (isdir(expanduser(path))):
             # Open directory in a new window (mirror behaviour of ST).
             sublime.run_command("new_window")            
@@ -110,8 +111,6 @@ class Input_Panel():
             sublime.active_window().set_project_data(data)
         else:
             sublime.active_window().open_file(path)
-
-        self.add_to_history(path)
         iOpenerCommand.input_panel = None
 
     #----------------------------------------------------------------------#
@@ -137,10 +136,9 @@ class Input_Panel():
         if (self.path_cache == None):  return
         
         if (i!=-1):
-            # Kill what was there before.
-            directory, filename = split( self.get_text() )
-
-            new_path = join(directory, self.path_cache[i])            
+            # Remove what was there before.
+            directory = split( self.get_text() )[0]
+            new_path  = join(directory, self.path_cache[i])            
             
             if (isdir(expanduser(new_path))):
                 new_path = new_path + sep
@@ -183,23 +181,12 @@ class path_mangler():
                 return sep
 
         directory, filename = split(path)
-        files = listdir(expanduser(directory))    
+        files      = listdir(expanduser(directory))    
         completion = path_mangler.path_complete(filename, files)[len(filename):]
 
-        if (len(completion) == 0): 
-            return ""
-        
-        if isdir(expanduser(path+completion)):
-            return completion + sep
-        else:
-            return completion
-
-    #----------------------------------------------------------------------#
-    # If this is an ancestor of '~/', truncate and add '~/'. Else, return
-    # relative to '/'.
-
-    def simplify_path(path):
-        pass
+        if len(completion) == 0:                return ""        
+        if isdir(expanduser(path+completion)):  return completion + sep
+        else:                                   return completion
 
     #----------------------------------------------------------------------#
         
@@ -211,21 +198,20 @@ class path_mangler():
 
         if data and len(data["folders"]) == 1:
             here = data["folders"][0]["path"]            
-        elif(view != None and view.file_name() != None): 
+        elif view != None and view.file_name() != None: 
             here = split(view.file_name())[0] + sep
         else:
             here = "~" + sep
-                
+ 
         # Return path relative to home if applicable.
         if len(commonprefix([home, here])) > 1:
-            return join("~", relpath(here,home))
+            relative_path = relpath(here,home)
+            if len(relative_path) > 1:
+                return join("~", relpath(here,home))
+            else:
+                return "~" + sep
         else:
             return here
-
-    #----------------------------------------------------------------------#
-
-    def get_history_path(i):
-        pass
 
 #------------------------------------------------------------------------------#
 # This event listener gives allows us to check when the 'tab' key should be 
@@ -245,8 +231,8 @@ class iOpenerEventListener(sublime_plugin.EventListener):
 class iOpenerUpdateCommand(sublime_plugin.TextCommand):
     def run(self, edit, append, text):  
         # Remember that we succeeded.
-        if text != "": iOpenerCompleteCommand.last_time = None
-        if append:     self.view.insert(edit, self.view.size(), text)
+        if    text != "":   iOpenerCompleteCommand.last_time = None
+        if    append:       self.view.insert(edit, self.view.size(), text)
         else: self.view.replace(edit, sublime.Region(0,self.view.size()), text)
 
 #------------------------------------------------------------------------------#
@@ -273,10 +259,8 @@ class iOpenerCompleteCommand(sublime_plugin.WindowCommand):
 
 class iOpenerCycleHistoryCommand(sublime_plugin.WindowCommand):
     def run(self, direction):
-        if direction == "up":
-            iOpenerCommand.input_panel.goto_prev_history()
-        elif direction == "down":
-            iOpenerCommand.input_panel.goto_next_history()
+        if   direction == "up":   iOpenerCommand.input_panel.goto_prev_history()
+        elif direction == "down": iOpenerCommand.input_panel.goto_next_history()
 
 #------------------------------------------------------------------------------#
 # This is the command caled by the UI.
