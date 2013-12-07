@@ -1,5 +1,9 @@
 [
+    // Steal open command and use it for iOpener.
     { "keys": ["ctrl+o"], "command": "i_opener" },
+    
+    // Allow over-riding of iOpener, and show normal system dialog.
+    { "keys": ["ctrl+shift+o"], "command": "prompt_open" },  
 
     {
         "keys": ["tab"],
