@@ -5,8 +5,8 @@
 # Written by Ross Hemsley, 2013.
 #------------------------------------------------------------------------------#
 import sublime, sublime_plugin, time
-from os.path import isdir,   expanduser, split, relpath, join, commonprefix
-from os      import listdir, sep
+from   os.path import isdir,   expanduser, split, relpath, join, commonprefix
+from   os      import listdir, sep
 
 # Here is where we store hsitory
 HISTORY_FILE    = 'i_opener_history.sublime-settings'
@@ -193,7 +193,7 @@ class Input_Panel():
     # Set the text in the file open input panel.
 
     def set_text(self, s):
-        self.view.run_command("i_opener_update", {"append": False, "text":s})
+        self.view.run_command("i_opener_update", {"append": False, "text": s})
 
     #----------------------------------------------------------------------#
     # Show a quick panel containing the possible completions.
@@ -227,7 +227,11 @@ class Input_Panel():
     #----------------------------------------------------------------------#
 
     def append_text(self, s):
-        self.view.run_command("i_opener_update", {"append": True, "text":s})
+        self.view.run_command("i_opener_update", {"append": True, "text": s})
+
+#------------------------------------------------------------------------------#
+# Commands and listeners.
+#------------------------------------------------------------------------------#
 
 #------------------------------------------------------------------------------#
 # Event listener to allow querying of context. All our events (for now) only
@@ -246,12 +250,8 @@ class iOpenerEventListener(sublime_plugin.EventListener):
 # The edit command used for editing the text in the input panel.
 
 class iOpenerUpdateCommand(sublime_plugin.TextCommand):
-    def run(self, edit, append, text):  
-        # Keep track of the last successful completion.
-        if    text != "":   iOpenerCompleteCommand.last_completion_time = None
-
-        # 
-        if    append:       self.view.insert(edit, self.view.size(), text)
+    def run(self, edit, append, text):
+        if append: self.view.insert(edit, self.view.size(), text)
         else: self.view.replace(edit, sublime.Region(0,self.view.size()), text)
 
 #------------------------------------------------------------------------------#
@@ -264,6 +264,7 @@ class iOpenerCompleteCommand(sublime_plugin.WindowCommand):
         
         if(input_panel.last_completion_failed):
             input_panel.last_completion_failed = False
+
             # Show the contents of this directory (if it exists).
             input_panel.show_completions()
         else:
