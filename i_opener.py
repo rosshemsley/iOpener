@@ -38,12 +38,16 @@ def get_completion(path):
             return sep
 
     directory, filename = split(path)
-    files      = listdir(expanduser(directory))    
-    completion = path_complete(filename, files)[len(filename):]
+    if not isdir(expanduser(directory)):        
+        sublime.status_message("Error: Path does not exist.")
+        return ""
+    else:
+        files      = listdir(expanduser(directory))    
+        completion = path_complete(filename, files)[len(filename):]
 
-    if len(completion) == 0:                return ""        
-    if isdir(expanduser(path+completion)):  return completion + sep
-    else:                                   return completion
+        if len(completion) == 0:                return ""        
+        if isdir(expanduser(path+completion)):  return completion + sep
+        else:                                   return completion
 
 #------------------------------------------------------------------------------#
 # Try to give a sensible estimate for 'current directory'.
