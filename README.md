@@ -14,6 +14,8 @@ type in file paths. Note the following:
 - Double-tapping tab will allow you to search a current directory.
 - Up/down allow you to navigate history.
 - Opening a folder will work by opening the folder in a new window. 
+- Attempting to open a path that doesn't exist will give a message asking
+  whether or not to create the path. 
 
 Note
 ----
