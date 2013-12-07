@@ -277,7 +277,6 @@ class iOpenerCompleteCommand(sublime_plugin.WindowCommand):
             if completion == "":
                 input_panel.last_completion_failed = True
             else:
-                print(completion)
                 input_panel.last_completion_failed = False
                 input_panel.append_text(completion)
 
