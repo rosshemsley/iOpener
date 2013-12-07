@@ -5,8 +5,8 @@
 # Written by Ross Hemsley, 2013.
 #------------------------------------------------------------------------------#
 import sublime, sublime_plugin, time
-from   os.path import isdir,   expanduser, split, relpath, join, commonprefix
-from   os      import listdir, sep
+from os.path import isdir, isfile, expanduser, split, relpath, join,commonprefix
+from os      import listdir, sep, makedirs
 
 # Here is where we store hsitory
 HISTORY_FILE    = 'i_opener_history.sublime-settings'
@@ -16,14 +16,19 @@ HISTORY_ENTRIES = 30
 # Function to find and return longest possile completion for a path p from a
 # list of candidates l.
 
-def path_complete(p, l):        
+def path_complete(p, l):
+    # When there's only one option, choose it by default.
+    if len(l) == 1:
+        return l[0]
+
+    # Return the longest matching prefix.
     i       = 0
     matches = []
     for i in range(len(p)):
         matches = list ( filter( lambda x: x.startswith(p), l ) )
         if len(matches) == 1:  return matches[0]
-        if len(matches) == 0:  return p[:i]
-    if len(matches) !=0:
+        if len(matches) == 0:  return p[:i]    
+    if len(matches) != 0:
         return commonprefix(matches)
     return ""
 
@@ -62,7 +67,7 @@ def get_current_path():
     here = None
 
     if data and len(data["folders"]) == 1:
-        here = data["folders"][0]["path"]            
+        here = data["folders"][0]["path"]
     elif view != None and view.file_name() != None: 
         here = split(view.file_name())[0] + sep
     else:
@@ -72,7 +77,7 @@ def get_current_path():
     if len(commonprefix([home, here])) > 1:
         relative_path = relpath(here,home)
         if len(relative_path) > 1:
-            return join("~", relpath(here,home))
+            return join("~", relpath(here,home)) + sep
         else:
             return "~" + sep
     else:
@@ -180,16 +185,45 @@ class Input_Panel():
     def open_file(self, path):
         self.add_to_history(path)
 
-        # For cross-platform compatibility, make sure '~' is removed.
         path = expanduser(path)
 
-        if (isdir(expanduser(path))):
+        # Ignore empty paths.
+        if len(path) == 0: 
+            sublime.status_message("Warning: Ignoring empty path.")
+            return
+
+        directory = ""
+        filename  = ""
+
+        # If the user enters a path without a filename.
+        if path[-1] == sep:  directory = path
+        else:                directory,filename = split(path)
+
+        # Path doesn't exist, ask the user if they want to create it.
+        if not isdir(directory):
+            create = sublime.ok_cancel_dialog(
+                "The path you entered does not exist, create it?","Yes"
+            )
+            # The user cancelled.
+            if not create: return
+            else:
+                try: makedirs(directory)
+                except OSError as e:
+                    sublime.error_message(
+                        "Failed to create path with error: "+str(e)
+                    )
+                    return
+
+        if filename == "":
             # Open directory in a new window (mirror behaviour of ST).
             sublime.run_command("new_window")            
             data = {"folders":[]}
             data["folders"].append({'follow_symlinks': True, 'path': path})
             sublime.active_window().set_project_data(data)
         else:
+            # If file doesn't exist, add a message in the status bar.
+            if not isfile(path):
+                sublime.status_message("Created new buffer '"+filename+"'")
             sublime.active_window().open_file(path)
         iOpenerCommand.input_panel = None
 
