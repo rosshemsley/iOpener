@@ -1,5 +1,5 @@
 #------------------------------------------------------------------------------#
-# A plugin to make opening files in Sublime Text a little bit less painless.
+# A plugin to make opening files in Sublime Text 3 a little bit less painfull.
 # Lisenced under GPL V2.
 #
 # Written by Ross Hemsley, 2013.
@@ -18,8 +18,7 @@ HISTORY_ENTRIES = 30
 
 def path_complete(p, l):
     # When there's only one option, choose it by default.
-    if len(l) == 1:
-        return l[0]
+    if len(l) == 1: return l[0]
 
     # Return the longest matching prefix.
     i       = 0
@@ -36,11 +35,8 @@ def path_complete(p, l):
 # Try to complete the given path.
 
 def get_completion(path):
-
     # We complete directories by simply adding a '/'
-    if isdir(expanduser(path)):
-        if len(path)>0 and path[-1]!= sep:
-            return sep
+    if isdir(expanduser(path)) and len(path)>0 and path[-1] != sep: return sep
 
     directory, filename = split(path)
     if not isdir(expanduser(directory)):        
@@ -128,7 +124,7 @@ class Input_Panel():
     def goto_prev_history(self):
         # Temporarily store any changes in cache, as bash does.
         self.history_cache[self.history_index] = self.get_text()
-        self.history_index -=1
+        self.history_index -= 1
         if self.history_index < 0:
             sublime.status_message("Reached start of history")
             self.history_index = 0
@@ -139,7 +135,7 @@ class Input_Panel():
     def goto_next_history(self):
         # Temporarily store any changes in cache, as bash does.
         self.history_cache[self.history_index] = self.get_text()
-        self.history_index +=1
+        self.history_index += 1
         if self.history_index == len(self.history_cache):
             sublime.status_message("Reached end of history")
             self.history_index = len(self.history_cache)-1
