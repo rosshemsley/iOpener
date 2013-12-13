@@ -7,9 +7,9 @@ listings and history.
 
 Use
 ---
-Tap "super+o" or "cntl-o" as usual (or use the Command Pallete, and select the
+Tap ```super+o``` or ```cntl-o``` as usual (or use the command pallete, and select the
 command "Find File"). You will be greeted with an input panel that allows you to
-type in file paths. Note the following:
+type in file paths.
 - Pressing tab will cause completion to occur.
 - Double-tapping tab will allow you to search a current directory.
 - Up/down allow you to navigate history.
@@ -17,20 +17,21 @@ type in file paths. Note the following:
 - Attempting to open a path that doesn't exist will give a message asking
   whether or not to create the path. 
 
+![screenshot](https://raw.github.com/rosshemsley/iOpener/screenshots/iOpener_screenshot.png)
+
 Note
 ----
 - This plugin will take over your default 'open file' shortcut. If you want to
-  use your system file-open dialog, use 'super+shift+o' or 'ctrl+shift+o'
+  use your system file-open dialog, use ```super+shift+o``` or ```ctrl+shift+o```
   depending on your OS.
-- The open panel will not show when no window is open. You will need to use
-  "cntl+n" or "super+n" to open a new window first.
+- The open panel will not show unless a window is open. You will need to use
+  ```cntl+n``` or ```super+n``` to open a new window first.
 
 
 Installing
 ----------
-Installation is easiest using Package Control. For now you need to add
-this repositry to the repsitory list. In the Command Pallette, 
-type: "Add Repository" enter this git repository and then install as normal.
+Installation is easiest using Package Control. In the Command Pallette, select
+"Install Package" and then select "iOpener".
 
 Credits
 -------
