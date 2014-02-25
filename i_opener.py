@@ -14,42 +14,46 @@ HISTORY_ENTRIES = 30
 
 #------------------------------------------------------------------------------#
 # Function to find and return longest possile completion for a path p from a
-# list of candidates l.
-
-def path_complete(p, l):
-    # When there's only one option, choose it by default.
-    if len(l) == 1: return l[0]
-
-    # Return the longest matching prefix.
-    i       = 0
-    matches = []
-    for i in range(len(p)):
-        matches = list ( filter( lambda x: x.startswith(p), l ) )
-        if len(matches) == 1:  return matches[0]
-        if len(matches) == 0:  return p[:i]    
-    if len(matches) != 0:
-        return commonprefix(matches)
-    return ""
-
-#------------------------------------------------------------------------------#
-# Try to complete the given path.
+# list of candidates l. Returns new_path, status, completed.
 
 def get_completion(path):
-    # We complete directories by simply adding a '/'
-    if isdir(expanduser(path)) and len(path)>0 and path[-1] != sep: return sep
-
+    # Find filename and directory.
     directory, filename = split(path)
-    if not isdir(expanduser(directory)):        
-        sublime.status_message("Error: Path does not exist.")
-        return ""
+
+    # Dir doesn't exist
+    if not isdir(expanduser(directory)):
+        status    = "No match"  
+        completed = False
+        return path, status, completed
+
+    # Get all matching files relating to this path.
+    dir_list = listdir(expanduser(directory))
+    matches = [ f for f in dir_list if f.lower().startswith(filename.lower()) ]
+
+    ## Handle filename completion. ##
+
+    # If this match is not unique.
+    if len(matches) >  1:
+        # We can do this more efficiently later.
+        # Get the longest prefix, ignoring case.
+        prefix_length = len( commonprefix([ s.lower() for s in matches ]) )        
+        new_filename  = filename + matches[0][len(filename):prefix_length] 
+        status        = "Complete, but not unique"
+        completed     = False
+    elif len(matches) == 1:  
+        new_filename  = matches[0]
+        # If we completed a directory
+        if isdir(expanduser(join(directory, new_filename))):
+            new_filename += sep
+        status        = None
+        completed     = True        
     else:
-        files      = listdir(expanduser(directory))    
-        completion = path_complete(filename, files)[len(filename):]
+        new_filename  = filename
+        status        = "No match"
+        completed     = False
 
-        if len(completion) == 0:                return ""        
-        if isdir(expanduser(path+completion)):  return completion + sep
-        else:                                   return completion
-
+    return join(directory, new_filename), status, completed
+    
 #------------------------------------------------------------------------------#
 # Try to give a sensible estimate for 'current directory'.
 # If there is a single folder open, we return that. 
@@ -85,7 +89,7 @@ def get_current_path():
 # it when the panel is closed.
 #------------------------------------------------------------------------------#
 
-class Input_Panel():
+class Path_input():
     
     #----------------------------------------------------------------------#
     # Class initialisation.
@@ -233,12 +237,17 @@ class Input_Panel():
     # Show a quick panel containing the possible completions.
 
     def show_completions(self):
-        active_window    = sublime.active_window()  
-        directory        = split(self.get_text())[0]
-        self.path_cache  = listdir(expanduser(directory))
+        active_window      = sublime.active_window()  
+        directory,filename = split(self.get_text())
+        
+        dir_list = listdir(expanduser(directory))
+        f_lower  = filename.lower()
+        self.path_cache=[x for x in dir_list if x.lower().startswith(f_lower)]
+        
         if len(self.path_cache) == 0:
-            sublime.status_message("Directory is empty")
-        active_window.show_quick_panel(self.path_cache, self.on_done)
+            sublime.status_message("No match")
+        else:
+            active_window.show_quick_panel(self.path_cache, self.on_done)
 
     #----------------------------------------------------------------------#
 
@@ -302,13 +311,12 @@ class iOpenerCompleteCommand(sublime_plugin.WindowCommand):
             # Show the contents of this directory (if it exists).
             input_panel.show_completions()
         else:
-            # Do path completion.
-            completion = get_completion( input_panel.get_text() )
-            if completion == "":
-                input_panel.last_completion_failed = True
-            else:
-                input_panel.last_completion_failed = False
-                input_panel.append_text(completion)
+            # Do path completion.            
+            path, status, complete = get_completion( input_panel.get_text() )
+            if (status != None):
+                sublime.status_message(status)
+            input_panel.set_text(path)
+            input_panel.last_completion_failed = not complete
 
 #------------------------------------------------------------------------------#
 # Receive requests to cycle history.
@@ -320,14 +328,14 @@ class iOpenerCycleHistoryCommand(sublime_plugin.WindowCommand):
 
 #------------------------------------------------------------------------------#
 # This is the command caled by the UI.
-# input_panel contains an instance of the class Input_Panel when the input is
+# input_panel contains an instance of the class Path_input when the input is
 # active, otherwise it contains None.
 
 class iOpenerCommand(sublime_plugin.WindowCommand):
     input_panel  = None
 
-    def run(self):    
+    def run(self):
         # Create a new input panel, it will display itself.
-        iOpenerCommand.input_panel = Input_Panel()
+        iOpenerCommand.input_panel = Path_input()
 
 #------------------------------------------------------------------------------#
