@@ -1,0 +1,7 @@
+{
+    // Whether or not to ignore case when completing.
+    "case_sensitive": false,
+
+    // Number of entries to store in history.
+    "history_entries": 30
+}
