@@ -1,16 +1,15 @@
 iOpener
 =======
 
-A Sublime Text 3 package to make locating and opening files much faster.
-Behaviour mostly emulates emacs' find-file. With auto-completion, directory
-listings and history. 
+A Sublime Text 3 package to make locating and opening files much faster, by
+opening from path instead of using the gui interface. Behaviour mostly emulates
+emacs' find-file. With auto-completion, directory listings and history.
 
 Use
 ---
 Tap `super+o` or `cntl-o` as usual (or use the command pallete, and select the
 command `Find File`). You will be greeted with an input panel that allows you to
 type in file paths.
-
 
 - Pressing tab will cause completion to occur.
 
@@ -23,7 +22,7 @@ type in file paths.
 - Attempting to open a path that doesn't exist will give a message asking
   whether or not to create the path. 
 
-![screenshot](https://raw.github.com/rosshemsley/iOpener/screenshots/demo.gif)
+![demo](https://raw.github.com/rosshemsley/iOpener/screenshots/demo.gif)
 
 Note
 ----
