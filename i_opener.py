@@ -8,9 +8,21 @@ import sublime, sublime_plugin, time
 from os.path import isdir, isfile, expanduser, split, relpath, join,commonprefix
 from os      import listdir, sep, makedirs
 
-# Here is where we store hsitory
-HISTORY_FILE    = 'i_opener_history.sublime-settings'
-HISTORY_ENTRIES = 30
+# Locations of settings files.
+HISTORY_FILE     = 'i_opener_history.sublime-settings'
+SETTINGS_FILE    = 'i_opener.sublime-settings'
+
+#------------------------------------------------------------------------------#
+
+def load_settings():
+    # We set these globals.
+    global HISTORY_ENTRIES
+    global CASE_SENSITIVE
+
+    settings = sublime.load_settings(SETTINGS_FILE)
+
+    CASE_SENSITIVE  = settings.get('case_sensitive')
+    HISTORY_ENTRIES = settings.get('history_entries')
 
 #------------------------------------------------------------------------------#
 # Function to find and return longest possile completion for a path p from a
@@ -27,8 +39,15 @@ def get_completion(path):
         return path, status, completed
 
     # Get all matching files relating to this path.
-    dir_list = listdir(expanduser(directory))
-    matches = [ f for f in dir_list if f.lower().startswith(filename.lower()) ]
+    f_list = listdir(expanduser(directory))
+    
+    matches  = []
+
+    # Case sensitivity test. 
+    if CASE_SENSITIVE:        
+        matches = [ f for f in f_list if f.startswith(filename) ]
+    else:
+        matches = [ f for f in f_list if f.lower().startswith(filename.lower())]
 
     ## Handle filename completion. ##
 
@@ -68,8 +87,9 @@ def get_current_path():
 
     if data and len(data["folders"]) == 1:
         here = data["folders"][0]["path"]
-    elif view != None and view.file_name() != None: 
-        here = split(view.file_name())[0] + sep
+    elif view != None and view.file_name() != None:        
+        here = split(view.file_name())[0]
+        if here != sep: here += sep
     else:
         here = "~" + sep
 
@@ -149,10 +169,15 @@ class Path_input():
 
     def add_to_history(self,path):        
         file_history, history_settings = self.get_history()
-        
-        # Trim the history to the correct length and add latest entry.
-        file_history = file_history[-(HISTORY_ENTRIES-1):]
-        file_history.append(path)
+
+        # Trim the history to the correct length and add latest entry.        
+        if HISTORY_ENTRIES > 1:
+            file_history = file_history[-HISTORY_ENTRIES+1:]
+            file_history.append(path)
+        elif HISTORY_ENTRIES == 1:
+            file_history = [path]
+        elif HISTORY_ENTRIES == 0:
+            file_history = []            
 
         # Save updated history.
         history_settings.set("file_history", file_history)
@@ -160,10 +185,14 @@ class Path_input():
 
     #----------------------------------------------------------------------#
 
-    def get_history(self):
+    def get_history(self):        
         history_settings = sublime.load_settings(HISTORY_FILE)
         file_history     = history_settings.get("file_history")
-        if not file_history: file_history = []
+        # Trim history.
+        if not file_history: 
+            file_history = []
+        else:
+            file_history = file_history[ -HISTORY_ENTRIES :]
         return file_history, history_settings        
     
     #----------------------------------------------------------------------#
@@ -241,8 +270,12 @@ class Path_input():
         directory,filename = split(self.get_text())
         
         dir_list = listdir(expanduser(directory))
-        f_lower  = filename.lower()
-        self.path_cache=[x for x in dir_list if x.lower().startswith(f_lower)]
+
+        if CASE_SENSITIVE:
+            self.path_cache = [x for x in dir_list if x.startswith(filename)]
+        else:
+            f  = filename.lower()
+            self.path_cache = [x for x in dir_list if x.lower().startswith(f)]
         
         if len(self.path_cache) == 0:
             sublime.status_message("No match")
@@ -335,6 +368,9 @@ class iOpenerCommand(sublime_plugin.WindowCommand):
     input_panel  = None
 
     def run(self):
+        # Re-load the settings file, which may have changed since last run.
+        load_settings()
+
         # Create a new input panel, it will display itself.
         iOpenerCommand.input_panel = Path_input()
 

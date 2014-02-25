@@ -5,6 +5,10 @@
     // Allow over-riding of iOpener, and show normal system dialog.
     { "keys": ["ctrl+shift+o"], "command": "prompt_open" },  
 
+
+    ////////////////////////////////////////////////////////////////////////////
+    // Do not edit //
+    ////////////////////////////////////////////////////////////////////////////
     {
         "keys": ["tab"],
         "command": "i_opener_complete",
@@ -22,4 +26,5 @@
         "context": [{"key": "i_opener"}],
         "args": {"direction": "down"}
     }
+    ////////////////////////////////////////////////////////////////////////////
 ]
