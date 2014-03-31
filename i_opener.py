@@ -244,11 +244,26 @@ class Path_input():
                     return
 
         if filename == "":
-            # Open directory in a new window (mirror behaviour of ST).
-            sublime.run_command("new_window")            
-            data = {"folders":[]}
-            data["folders"].append({'follow_symlinks': True, 'path': path})
-            sublime.active_window().set_project_data(data)
+            dir_name = path
+            folder = {
+            'follow_symlinks': True,
+            'path': dir_name,
+            'folder_exclude_patterns': ['.*'],
+
+            }
+            project_data = sublime.active_window().project_data();
+            try:
+                folders = project_data['folders']
+                for f in folders:
+                    if f['path'] == dir_name:
+                        return
+                folders.append(folder)
+            except:
+                folders = [folder]
+                if project_data is None:
+                    project_data = {}
+                project_data['folders'] = folders
+            sublime.active_window().set_project_data(project_data)
         else:
             # If file doesn't exist, add a message in the status bar.
             if not isfile(path):
