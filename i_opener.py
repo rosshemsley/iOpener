@@ -7,6 +7,12 @@
 import sublime, sublime_plugin, time
 from os.path import isdir, isfile, expanduser, split, relpath, join,commonprefix
 from os      import listdir, sep, makedirs
+try:
+    from dired.show import show
+except ImportError:
+    support_dired = False
+else:
+    support_dired = True
 
 # Locations of settings files.
 HISTORY_FILE     = 'i_opener_history.sublime-settings'
@@ -34,17 +40,17 @@ def get_completion(path):
 
     # Dir doesn't exist
     if not isdir(expanduser(directory)):
-        status    = "No match"  
+        status    = "No match"
         completed = False
         return path, status, completed
 
     # Get all matching files relating to this path.
     f_list = listdir(expanduser(directory))
-    
+
     matches  = []
 
-    # Case sensitivity test. 
-    if CASE_SENSITIVE:        
+    # Case sensitivity test.
+    if CASE_SENSITIVE:
         matches = [ f for f in f_list if f.startswith(filename) ]
     else:
         matches = [ f for f in f_list if f.lower().startswith(filename.lower())]
@@ -55,28 +61,28 @@ def get_completion(path):
     if len(matches) >  1:
         # We can do this more efficiently later.
         # Get the longest prefix, ignoring case.
-        prefix_length = len( commonprefix([ s.lower() for s in matches ]) )        
-        new_filename  = filename + matches[0][len(filename):prefix_length] 
+        prefix_length = len( commonprefix([ s.lower() for s in matches ]) )
+        new_filename  = filename + matches[0][len(filename):prefix_length]
         status        = "Complete, but not unique"
         completed     = False
-    elif len(matches) == 1:  
+    elif len(matches) == 1:
         new_filename  = matches[0]
         # If we completed a directory
         if isdir(expanduser(join(directory, new_filename))):
             new_filename += sep
         status        = None
-        completed     = True        
+        completed     = True
     else:
         new_filename  = filename
         status        = "No match"
         completed     = False
 
     return join(directory, new_filename), status, completed
-    
+
 #------------------------------------------------------------------------------#
 # Try to give a sensible estimate for 'current directory'.
-# If there is a single folder open, we return that. 
-# Else, if there is an active file, return its path. 
+# If there is a single folder open, we return that.
+# Else, if there is an active file, return its path.
 # If all else fails, return the home directory.
 
 def get_current_path():
@@ -87,7 +93,7 @@ def get_current_path():
 
     if data and len(data["folders"]) == 1:
         here = data["folders"][0]["path"]
-    elif view != None and view.file_name() != None:        
+    elif view != None and view.file_name() != None:
         here = split(view.file_name())[0]
         if here != sep: here += sep
     else:
@@ -110,10 +116,10 @@ def get_current_path():
 #------------------------------------------------------------------------------#
 
 class Path_input():
-    
+
     #----------------------------------------------------------------------#
     # Class initialisation.
-    
+
     def __init__(self):
         # If the user presses tab, and nothing happens, remember it.
         # If they press tab again, we show them a list of files.
@@ -124,16 +130,16 @@ class Path_input():
 
         # We only reload the history each time the input window is opened.
         self.history_cache = self.get_history()[0]
-        
+
         # Store default at end of history cache and 'select' it.
-        self.history_cache.append(path)        
+        self.history_cache.append(path)
         self.history_index = len(self.history_cache)-1
 
         self.view          = active_window.show_input_panel(
-            "Find file: ", 
-            path, 
-            self.open_file, 
-            self.update, 
+            "Find file: ",
+            path,
+            self.open_file,
+            self.update,
             self.cancel
         )
 
@@ -141,7 +147,7 @@ class Path_input():
     # If the user updates the input, reset the 'failed completion' flag.
 
     def update(self,text):
-        self.last_completion_failed = False    
+        self.last_completion_failed = False
 
     #----------------------------------------------------------------------#
 
@@ -167,17 +173,17 @@ class Path_input():
 
     #----------------------------------------------------------------------#
 
-    def add_to_history(self,path):        
+    def add_to_history(self,path):
         file_history, history_settings = self.get_history()
 
-        # Trim the history to the correct length and add latest entry.        
+        # Trim the history to the correct length and add latest entry.
         if HISTORY_ENTRIES > 1:
             file_history = file_history[-HISTORY_ENTRIES+1:]
             file_history.append(path)
         elif HISTORY_ENTRIES == 1:
             file_history = [path]
         elif HISTORY_ENTRIES == 0:
-            file_history = []            
+            file_history = []
 
         # Save updated history.
         history_settings.set("file_history", file_history)
@@ -185,16 +191,16 @@ class Path_input():
 
     #----------------------------------------------------------------------#
 
-    def get_history(self):        
+    def get_history(self):
         history_settings = sublime.load_settings(HISTORY_FILE)
         file_history     = history_settings.get("file_history")
         # Trim history.
-        if not file_history: 
+        if not file_history:
             file_history = []
         else:
             file_history = file_history[ -HISTORY_ENTRIES :]
-        return file_history, history_settings        
-    
+        return file_history, history_settings
+
     #----------------------------------------------------------------------#
     # Method called when we exit from the input panel without opening a file.
 
@@ -207,7 +213,7 @@ class Path_input():
 
     def get_text(self):
         return self.view.substr(sublime.Region(0, self.view.size()))
-    
+
     #----------------------------------------------------------------------#
     # Open the given path. Can be a directory OR a file.
 
@@ -217,7 +223,7 @@ class Path_input():
         path = expanduser(path)
 
         # Ignore empty paths.
-        if len(path) == 0: 
+        if len(path) == 0:
             sublime.status_message("Warning: Ignoring empty path.")
             return
 
@@ -244,11 +250,14 @@ class Path_input():
                     return
 
         if filename == "":
-            # Open directory in a new window (mirror behaviour of ST).
-            sublime.run_command("new_window")            
-            data = {"folders":[]}
-            data["folders"].append({'follow_symlinks': True, 'path': path})
-            sublime.active_window().set_project_data(data)
+            if support_dired:
+                show(sublime.active_window(), directory)
+            else:
+                # Open directory in a new window (mirror behaviour of ST).
+                sublime.run_command("new_window")
+                data = {"folders": []}
+                data["folders"].append({'follow_symlinks': True, 'path': path})
+                sublime.active_window().set_project_data(data)
         else:
             # If file doesn't exist, add a message in the status bar.
             if not isfile(path):
@@ -266,9 +275,9 @@ class Path_input():
     # Show a quick panel containing the possible completions.
 
     def show_completions(self):
-        active_window      = sublime.active_window()  
+        active_window      = sublime.active_window()
         directory,filename = split(self.get_text())
-        
+
         dir_list = listdir(expanduser(directory))
 
         if CASE_SENSITIVE:
@@ -276,7 +285,7 @@ class Path_input():
         else:
             f  = filename.lower()
             self.path_cache = [x for x in dir_list if x.lower().startswith(f)]
-        
+
         if len(self.path_cache) == 0:
             sublime.status_message("No match")
         else:
@@ -286,15 +295,15 @@ class Path_input():
 
     def on_done(self, i):
         if (self.path_cache == None):  return
-        
+
         if (i!=-1):
             # Remove what was there before.
             directory = split( self.get_text() )[0]
-            new_path  = join(directory, self.path_cache[i])            
-            
+            new_path  = join(directory, self.path_cache[i])
+
             if (isdir(expanduser(new_path))):
                 new_path = new_path + sep
-            
+
             self.set_text(new_path)
             self.path_cache = None
             sublime.active_window().focus_view(self.view)
@@ -314,14 +323,14 @@ class Path_input():
 # need to know if the plugin is active. If so, Sublime Text calls the correct
 # commands.
 
-class iOpenerEventListener(sublime_plugin.EventListener):    
+class iOpenerEventListener(sublime_plugin.EventListener):
     def on_query_context(self, view, key, operator, operand, match_all):
         return  (
-                 key                              ==  'i_opener'  
+                 key                              ==  'i_opener'
             and  iOpenerCommand.input_panel       !=  None
             and  iOpenerCommand.input_panel.view  ==  view
         )
-        
+
 #------------------------------------------------------------------------------#
 # The edit command used for editing the text in the input panel.
 
@@ -333,18 +342,18 @@ class iOpenerUpdateCommand(sublime_plugin.TextCommand):
 #------------------------------------------------------------------------------#
 # The command called by tapping tab in the open panel.
 
-class iOpenerCompleteCommand(sublime_plugin.WindowCommand):    
+class iOpenerCompleteCommand(sublime_plugin.WindowCommand):
 
     def run(self):
-        input_panel = iOpenerCommand.input_panel        
-        
+        input_panel = iOpenerCommand.input_panel
+
         if(input_panel.last_completion_failed):
             input_panel.last_completion_failed = False
 
             # Show the contents of this directory (if it exists).
             input_panel.show_completions()
         else:
-            # Do path completion.            
+            # Do path completion.
             path, status, complete = get_completion( input_panel.get_text() )
             if (status != None):
                 sublime.status_message(status)
@@ -373,5 +382,4 @@ class iOpenerCommand(sublime_plugin.WindowCommand):
 
         # Create a new input panel, it will display itself.
         iOpenerCommand.input_panel = Path_input()
-
 #------------------------------------------------------------------------------#
