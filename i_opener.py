@@ -85,7 +85,7 @@ def get_current_path():
     data = sublime.active_window().project_data()
     here = None
 
-    if data and len(data["folders"]) == 1:
+    if data and "folders" in data and len(data["folders"]) == 1:
         here = data["folders"][0]["path"]
     elif view != None and view.file_name() != None:        
         here = split(view.file_name())[0]
