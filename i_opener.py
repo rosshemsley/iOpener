@@ -5,7 +5,7 @@
 # Written by Ross Hemsley, 2013.
 #------------------------------------------------------------------------------#
 import sublime, sublime_plugin, time
-from os.path import isdir, isfile, expanduser, split, relpath, join,commonprefix
+from os.path import isdir, isfile, expanduser, split, relpath, join, commonprefix, normpath, isabs
 from os      import listdir, sep, makedirs
 
 # Locations of settings files.
@@ -88,7 +88,14 @@ def get_current_path():
     here = None
 
     if USE_PROJECT_DIR and data and "folders" in data and len(data["folders"]) == 1:
-        here = data["folders"][0]["path"]
+        specified_path = data["folders"][0]["path"]
+        if isabs(specified_path):
+            here = specified_path+sep
+        else:
+            project_file_name = sublime.active_window().project_file_name()
+            project_file_dir = split(project_file_name)[0]
+            here = normpath(join(project_file_dir, specified_path))+sep
+
     elif view != None and view.file_name() != None:        
         here = split(view.file_name())[0]
         if here != sep: here += sep
