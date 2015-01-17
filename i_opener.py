@@ -16,11 +16,13 @@ SETTINGS_FILE    = 'i_opener.sublime-settings'
 
 def load_settings():
     # We set these globals.
+    global USE_PROJECT_DIR
     global HISTORY_ENTRIES
     global CASE_SENSITIVE
 
     settings = sublime.load_settings(SETTINGS_FILE)
 
+    USE_PROJECT_DIR = settings.get("use_project_dir")
     CASE_SENSITIVE  = settings.get('case_sensitive')
     HISTORY_ENTRIES = settings.get('history_entries')
 
@@ -85,7 +87,7 @@ def get_current_path():
     data = sublime.active_window().project_data()
     here = None
 
-    if data and "folders" in data and len(data["folders"]) == 1:
+    if USE_PROJECT_DIR and data and "folders" in data and len(data["folders"]) == 1:
         here = data["folders"][0]["path"]
     elif view != None and view.file_name() != None:        
         here = split(view.file_name())[0]

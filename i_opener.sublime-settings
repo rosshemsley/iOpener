@@ -1,4 +1,7 @@
 {
+    // Whether or not to consider the project's directory when choosing a path at which to start
+    "use_project_dir": true,
+
     // Whether or not to ignore case when completing.
     "case_sensitive": false,
 
