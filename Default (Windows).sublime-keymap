@@ -3,7 +3,7 @@
     { "keys": ["ctrl+o"], "command": "i_opener" },
     
     // Allow over-riding of iOpener, and show normal system dialog.
-    { "keys": ["ctrl+shift+o"], "command": "prompt_open" },  
+    { "keys": ["ctrl+shift+o"], "command": "prompt_open_file" },  
 
     
     ////////////////////////////////////////////////////////////////////////////
