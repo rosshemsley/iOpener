@@ -22,7 +22,7 @@ def load_settings():
 
     settings = sublime.load_settings(SETTINGS_FILE)
 
-    USE_PROJECT_DIR = settings.get("use_project_dir")
+    USE_PROJECT_DIR = settings.get('use_project_dir')
     CASE_SENSITIVE  = settings.get('case_sensitive')
     HISTORY_ENTRIES = settings.get('history_entries')
 
