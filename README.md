@@ -17,8 +17,6 @@ type in file paths.
 
 - Up/down allow you to navigate history.
 
-- Opening a folder will work by opening the folder in a new window. 
-
 - Attempting to open a path that doesn't exist will give a message asking
   whether or not to create the path. 
 
