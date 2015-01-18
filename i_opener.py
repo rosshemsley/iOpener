@@ -17,12 +17,14 @@ SETTINGS_FILE    = 'i_opener.sublime-settings'
 def load_settings():
     # We set these globals.
     global USE_PROJECT_DIR
+    global OPEN_FOLDERS_IN_NEW_WINDOW
     global HISTORY_ENTRIES
     global CASE_SENSITIVE
 
     settings = sublime.load_settings(SETTINGS_FILE)
 
     USE_PROJECT_DIR = settings.get('use_project_dir')
+    OPEN_FOLDERS_IN_NEW_WINDOW = settings.get('open_folders_in_new_window')
     CASE_SENSITIVE  = settings.get('case_sensitive')
     HISTORY_ENTRIES = settings.get('history_entries')
 
@@ -253,11 +255,29 @@ class Path_input():
                     return
 
         if filename == "":
-            # Open directory in a new window (mirror behaviour of ST).
-            sublime.run_command("new_window")            
-            data = {"folders":[]}
-            data["folders"].append({'follow_symlinks': True, 'path': path})
-            sublime.active_window().set_project_data(data)
+            project_data = sublime.active_window().project_data();
+            if OPEN_FOLDERS_IN_NEW_WINDOW:
+                # Open directory in a new window (mirror behaviour of ST).
+                sublime.run_command("new_window")
+                project_data = {"folders":[]}
+                project_data["folders"].append({'follow_symlinks': True, 'path': path})
+            else:
+                folder = {
+                    'follow_symlinks': True,
+                    'path': path,
+                    'folder_exclude_patterns': ['.*'],
+                }
+                if not project_data:
+                    project_data = {}
+
+                if 'folders' in project_data:
+                    for f in project_data['folders']:
+                        if f['path'] == path:
+                            return
+                    project_data['folders'].append(folder)
+                else:
+                    project_data['folders'] = [folder]
+            sublime.active_window().set_project_data(project_data)
         else:
             # If file doesn't exist, add a message in the status bar.
             if not isfile(path):
