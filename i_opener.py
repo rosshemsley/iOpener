@@ -320,14 +320,17 @@ class Path_input():
             # Remove what was there before.
             directory = split( self.get_text() )[0]
             new_path  = join(directory, self.path_cache[i])            
-            
+            self.path_cache = None
+
             if (isdir(expanduser(new_path))):
                 new_path = new_path + sep
-            
-            self.set_text(new_path)
-            self.path_cache = None
+                self.set_text(new_path)
+                sublime.active_window().focus_view(self.view)
+            else:
+                self.open_file(new_path)
+                sublime.active_window().run_command("hide_panel", {"cancel": True})
+        else:
             sublime.active_window().focus_view(self.view)
-        sublime.active_window().focus_view(self.view)
 
     #----------------------------------------------------------------------#
 
