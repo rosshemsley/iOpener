@@ -6,7 +6,7 @@
             {
                 "caption":   "Open Path...",
                 "command":   "i_opener",
-                "mnemonic":  "o"
+                "mnemonic":  "O"
             }
         ]
     },
