@@ -291,17 +291,15 @@ class iOpenerPathInput():
             active_window.show_quick_panel(self.path_cache, self.on_done)
 
     def on_done(self, i):
-        if (self.path_cache == None):  return
+        if self.path_cache is None:
+            return
 
-        if (i!=-1):
-            # Remove what was there before.
-            directory = split( self.get_text() )[0]
+        elif i != -1:
+            directory, _ = split(self.get_text())
             new_path  = join(directory, self.path_cache[i])
             self.path_cache = None
 
             if isdir(expanduser(new_path)):
-                if not new_path.endswith(sep):
-                    new_path = new_path + sep
                 self.set_text(new_path)
                 sublime.active_window().focus_view(self.view)
             else:
