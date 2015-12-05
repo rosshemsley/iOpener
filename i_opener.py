@@ -9,7 +9,7 @@ import sublime, sublime_plugin, time
 from os.path import isdir, isfile, expanduser, split, relpath, join, commonprefix, normpath
 from os      import listdir, sep, makedirs
 
-from matching import get_matches
+from .matching import complete_path, get_matches
 
 # Locations of settings files.
 HISTORY_FILE     = 'i_opener_history.sublime-settings'
@@ -62,28 +62,7 @@ def get_completion(path):
     # Get all matching files relating to this path.
     directory_listing = listdir(expanduser(directory))
     matches = get_matches(filename, directory_listing, CASE_SENSITIVE)
-
-    ## Handle filename completion. ##
-
-    # If this match is not unique.
-    if len(matches) >  1:
-        # We can do this more efficiently later.
-        # Get the longest prefix, ignoring case.
-        prefix_length = len( commonprefix([ s.lower() for s in matches ]) )
-        new_filename  = filename + matches[0][len(filename):prefix_length]
-        status        = "Complete, but not unique"
-        completed     = False
-    elif len(matches) == 1:
-        new_filename  = matches[0]
-        # If we completed a directory
-        if isdir(expanduser(join(directory, new_filename))):
-            new_filename += sep
-        status        = None
-        completed     = True
-    else:
-        new_filename  = filename
-        status        = "No match"
-        completed     = False
+    new_filename, status, completed = complete_path(filename, directory, matches)
 
     return join(directory, new_filename), status, completed
 
