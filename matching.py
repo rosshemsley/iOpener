@@ -3,30 +3,22 @@ from unittest import TestCase
 from os.path import isdir, isfile, expanduser, split, relpath, join, commonprefix, normpath
 from os      import listdir, sep, makedirs
 
-def complete_path(filename, directory, matches):
-    # If this match is not unique.
-    if len(matches) >  1:
-        # We can do this more efficiently later.
-        # Get the longest prefix, ignoring case.
-        prefix_length = len( commonprefix([ s.lower() for s in matches ]) )
+def complete_path(filename, matches):
+    if len(matches) > 1:
+        prefix_length = len(commonprefix([ s.lower() for s in matches ]))
         new_filename  = filename + matches[0][len(filename):prefix_length]
         status        = "Complete, but not unique"
         completed     = False
-
-        return new_filename, status, completed
     elif len(matches) == 1:
-        new_filename  = matches[0]
-        # If we completed a directory
-        if isdir(expanduser(join(directory, new_filename))):
-            new_filename += sep
-        status        = None
-        completed     = True
-        return new_filename, status, completed
+        status = None
+        completed = True
+        new_filename = matches[0]
     else:
         new_filename  = filename
-        status        = "No match"
-        completed     = False
-        return new_filename, status, completed
+        status = "No match"
+        completed = False
+
+    return new_filename, status, completed
 
 
 def get_matches(filename, directory_listing, case_sensitive):

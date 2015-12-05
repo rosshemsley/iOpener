@@ -62,7 +62,10 @@ def get_completion(path):
     # Get all matching files relating to this path.
     directory_listing = listdir(expanduser(directory))
     matches = get_matches(filename, directory_listing, CASE_SENSITIVE)
-    new_filename, status, completed = complete_path(filename, directory, matches)
+    new_filename, status, completed = complete_path(filename, matches)
+
+    if new_filename != '' and isdir(expanduser(join(directory, new_filename))):
+        new_filename += sep
 
     return join(directory, new_filename), status, completed
 
