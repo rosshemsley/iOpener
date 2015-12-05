@@ -9,7 +9,7 @@ import sublime, sublime_plugin, time
 from os.path import isdir, isfile, expanduser, split, relpath, join, commonprefix, normpath
 from os      import listdir, sep, makedirs
 
-from .matching import complete_path, get_matches
+from .matching import complete_path, get_directory_listing
 
 # Locations of settings files.
 HISTORY_FILE     = 'i_opener_history.sublime-settings'
@@ -61,8 +61,7 @@ def get_completion(path):
 
     # Get all matching files relating to this path.
     directory_listing = listdir(expanduser(directory))
-    matches = get_matches(filename, directory_listing, CASE_SENSITIVE)
-    new_filename, status, completed = complete_path(filename, matches)
+    new_filename, status, completed = complete_path(filename, directory_listing, CASE_SENSITIVE)
 
     if new_filename != '' and isdir(expanduser(join(directory, new_filename))):
         new_filename += sep
@@ -283,13 +282,8 @@ class iOpenerPathInput():
         active_window      = sublime.active_window()
         directory,filename = split(self.get_text())
 
-        dir_list = listdir(expanduser(directory))
-
-        if CASE_SENSITIVE:
-            self.path_cache = [x for x in dir_list if x.startswith(filename)]
-        else:
-            f  = filename.lower()
-            self.path_cache = [x for x in dir_list if x.lower().startswith(f)]
+        directory_listing = get_directory_listing(expanduser(directory))
+        self.path_cache = get_matches(filename, directory_listing, CASE_SENSITIVE)
 
         if len(self.path_cache) == 0:
             sublime.status_message("No match")

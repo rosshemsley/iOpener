@@ -3,7 +3,25 @@ from unittest import TestCase
 from os.path import isdir, isfile, expanduser, split, relpath, join, commonprefix, normpath
 from os      import listdir, sep, makedirs
 
-def complete_path(filename, matches):
+
+def get_directory_listing(path):
+    """
+    Return directory listing with directories annotated.
+    """
+    output = []
+
+    for filename in listdir(path):
+        if isdir(join(path,filename)):
+            output.append(filename + sep)
+        else:
+            output.append(filename)
+
+    return output
+
+
+def complete_path(filename, directory_listing, case_sensitive=False):
+    matches = get_matches(filename, directory_listing, case_sensitive)
+
     if len(matches) > 1:
         new_filename  = longest_completion(filename, matches)
         status        = "Complete, but not unique"
