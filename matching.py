@@ -5,8 +5,7 @@ from os      import listdir, sep, makedirs
 
 def complete_path(filename, matches):
     if len(matches) > 1:
-        prefix_length = len(commonprefix([ s.lower() for s in matches ]))
-        new_filename  = filename + matches[0][len(filename):prefix_length]
+        new_filename  = longest_completion(filename, matches)
         status        = "Complete, but not unique"
         completed     = False
     elif len(matches) == 1:
@@ -28,9 +27,55 @@ def get_matches(filename, directory_listing, case_sensitive):
         return [f for f in directory_listing if f.lower().startswith(filename.lower())]
 
 
+def longest_completion(filename, matches):
+    return filename + commonprefix(matches)[len(filename):]
+
+
 ##
 # Unit tests
 ##
+
+
+class TestCompletion(TestCase):
+    def test1(self):
+        filename = 'test'
+        matches = [
+            'testable',
+            'testa',
+            'testand',
+            'testand'
+        ]
+        output = longest_completion(filename, matches)
+        expected = 'testa'
+
+        self.assertEqual(expected, output)
+
+    def test2(self):
+        filename = 'test'
+        matches = [
+            'testable',
+            'testa',
+            'testand',
+            'Testand'
+        ]
+        output = longest_completion(filename, matches)
+        expected = 'test'
+
+        self.assertEqual(expected, output)
+
+    def test3(self):
+        filename = 'test'
+        matches = [
+            'tester',
+            'testable',
+            'testa',
+            'testand',
+            'Testand'
+        ]
+        output = longest_completion(filename, matches)
+        expected = 'test'
+
+        self.assertEqual(expected, output)
 
 
 class TestMatches(TestCase):
