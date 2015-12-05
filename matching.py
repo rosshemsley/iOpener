@@ -4,21 +4,6 @@ from os.path import isdir, isfile, expanduser, split, relpath, join, commonprefi
 from os      import listdir, sep, makedirs
 
 
-def get_directory_listing(path):
-    """
-    Return directory listing with directories annotated.
-    """
-    output = []
-
-    for filename in listdir(path):
-        if isdir(join(path,filename)):
-            output.append(filename + sep)
-        else:
-            output.append(filename)
-
-    return output
-
-
 def complete_path(filename, directory_listing, case_sensitive=False):
     matches = get_matches(filename, directory_listing, case_sensitive)
 

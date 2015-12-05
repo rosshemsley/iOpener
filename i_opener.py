@@ -9,7 +9,7 @@ import sublime, sublime_plugin, time
 from os.path import isdir, isfile, expanduser, split, relpath, join, commonprefix, normpath
 from os      import listdir, sep, makedirs
 
-from .matching import complete_path, get_directory_listing
+from .matching import complete_path
 
 # Locations of settings files.
 HISTORY_FILE     = 'i_opener_history.sublime-settings'
@@ -282,7 +282,7 @@ class iOpenerPathInput():
         active_window      = sublime.active_window()
         directory, filename = split(self.get_text())
 
-        directory_listing = get_directory_listing(expanduser(directory))
+        directory_listing = directory_listing_for_quick_panel(expanduser(directory))
         self.path_cache = get_matches(filename, directory_listing, CASE_SENSITIVE)
 
         if len(self.path_cache) == 0:
@@ -310,6 +310,21 @@ class iOpenerPathInput():
 
     def append_text(self, s):
         self.view.run_command("i_opener_update", {"append": True, "text": s})
+
+
+def directory_listing_for_quick_panel(path):
+    """
+    Return directory listing with directories annotated.
+    """
+    output = []
+
+    for filename in listdir(path):
+        if isdir(join(path,filename)):
+            output.append(filename + sep)
+        else:
+            output.append(filename)
+
+    return output
 
 
 ##
