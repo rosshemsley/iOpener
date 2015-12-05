@@ -4,23 +4,23 @@ from os.path import isdir, isfile, expanduser, split, relpath, join, commonprefi
 from os      import listdir, sep, makedirs
 
 
+class COMPLETION_TYPE:
+    CompleteButNotUnique = 0
+    Complete = 1
+    NoMatch = 2
+
+
 def complete_path(filename, directory_listing, case_sensitive=False):
     matches = get_matches(filename, directory_listing, case_sensitive)
 
     if len(matches) > 1:
-        new_filename  = longest_completion(filename, matches)
-        status        = "Complete, but not unique"
-        completed     = False
-    elif len(matches) == 1:
-        status = None
-        completed = True
-        new_filename = matches[0]
-    else:
-        new_filename  = filename
-        status = "No match"
-        completed = False
+        new_filename = longest_completion(filename, matches)
+        return new_filename, COMPLETION_TYPE.CompleteButNotUnique
 
-    return new_filename, status, completed
+    elif len(matches) == 1:
+        return matches[0], COMPLETION_TYPE.Complete
+    else:
+        return filename, COMPLETION_TYPE.NoMatch
 
 
 def get_matches(filename, directory_listing, case_sensitive):

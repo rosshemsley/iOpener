@@ -9,12 +9,17 @@ import sublime, sublime_plugin, time
 from os.path import isdir, isfile, expanduser, split, relpath, join, commonprefix, normpath
 from os      import listdir, sep, makedirs
 
-from .matching import complete_path
+from .matching import complete_path, COMPLETION_TYPE
 
 # Locations of settings files.
 HISTORY_FILE     = 'i_opener_history.sublime-settings'
 SETTINGS_FILE    = 'i_opener.sublime-settings'
 
+STATUS_MESSAGES = {
+    COMPLETION_TYPE.CompleteButNotUnique: 'Complete, but not unique',
+    COMPLETION_TYPE.NoMatch: 'No match',
+    COMPLETION_TYPE.Complete: None,
+}
 
 def load_settings():
     # We set these globals.
@@ -55,18 +60,15 @@ def get_completion(path):
 
     # Dir doesn't exist
     if not isdir(expanduser(directory)):
-        status    = "No match"
-        completed = False
-        return path, status, completed
+        return path, COMPLETION_TYPE.NoMatch
 
-    # Get all matching files relating to this path.
     directory_listing = listdir(expanduser(directory))
-    new_filename, status, completed = complete_path(filename, directory_listing, CASE_SENSITIVE)
+    new_filename, completion_type = complete_path(filename, directory_listing, CASE_SENSITIVE)
 
     if new_filename != '' and isdir(expanduser(join(directory, new_filename))):
         new_filename += sep
 
-    return join(directory, new_filename), status, completed
+    return join(directory, new_filename), completion_type
 
 
 def get_current_path():
@@ -286,7 +288,7 @@ class iOpenerPathInput():
         self.path_cache = get_matches(filename, directory_listing, CASE_SENSITIVE)
 
         if len(self.path_cache) == 0:
-            sublime.status_message("No match")
+            show_completion_message(COMPLETION_TYPE.NoMatch)
         else:
             active_window.show_quick_panel(self.path_cache, self.on_done)
 
@@ -327,6 +329,13 @@ def directory_listing_for_quick_panel(path):
     return output
 
 
+def show_completion_message(completion_type):
+    status = STATUS_MESSAGES.get(completion_type)
+
+    if status is not None:
+        sublime.status_message(status)
+
+
 ##
 # Commands and listeners.
 ##
@@ -361,18 +370,16 @@ class iOpenerCompleteCommand(sublime_plugin.WindowCommand):
     def run(self):
         input_panel = iOpenerCommand.input_panel
 
-        if(input_panel.last_completion_failed):
+        if input_panel.last_completion_failed:
             input_panel.last_completion_failed = False
-
-            # Show the contents of this directory (if it exists).
             input_panel.show_completions()
         else:
-            # Do path completion.
-            path, status, complete = get_completion( input_panel.get_text() )
-            if (status != None):
-                sublime.status_message(status)
-            input_panel.set_text(path)
-            input_panel.last_completion_failed = not complete
+            completion, completion_type = get_completion(input_panel.get_text())
+            show_completion_message(completion_type)
+            input_panel.set_text(completion)
+
+            completion_failed = completion_type != COMPLETION_TYPE.Complete
+            input_panel.last_completion_failed = completion_failed
 
 
 class iOpenerCycleHistoryCommand(sublime_plugin.WindowCommand):
