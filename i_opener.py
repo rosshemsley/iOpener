@@ -9,6 +9,8 @@ import sublime, sublime_plugin, time
 from os.path import isdir, isfile, expanduser, split, relpath, join, commonprefix, normpath
 from os      import listdir, sep, makedirs
 
+from matching import get_matches
+
 # Locations of settings files.
 HISTORY_FILE     = 'i_opener_history.sublime-settings'
 SETTINGS_FILE    = 'i_opener.sublime-settings'
@@ -84,13 +86,6 @@ def get_completion(path):
         completed     = False
 
     return join(directory, new_filename), status, completed
-
-
-def get_matches(filename, directory_listing, case_sensitive):
-    if case_sensitive:
-        return [f for f in directory_listing if f.startswith(filename)]
-    else:
-        return [f for f in directory_listing if f.lower().startswith(filename.lower())]
 
 
 def get_current_path():
