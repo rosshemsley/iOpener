@@ -58,15 +58,8 @@ def get_completion(path):
         return path, status, completed
 
     # Get all matching files relating to this path.
-    f_list = listdir(expanduser(directory))
-
-    matches  = []
-
-    # Case sensitivity test.
-    if CASE_SENSITIVE:
-        matches = [ f for f in f_list if f.startswith(filename) ]
-    else:
-        matches = [ f for f in f_list if f.lower().startswith(filename.lower())]
+    directory_listing = listdir(expanduser(directory))
+    matches = get_matches(filename, directory_listing, CASE_SENSITIVE)
 
     ## Handle filename completion. ##
 
@@ -91,6 +84,13 @@ def get_completion(path):
         completed     = False
 
     return join(directory, new_filename), status, completed
+
+
+def get_matches(filename, directory_listing, case_sensitive):
+    if case_sensitive:
+        return [f for f in directory_listing if f.startswith(filename)]
+    else:
+        return [f for f in directory_listing if f.lower().startswith(filename.lower())]
 
 
 def get_current_path():
