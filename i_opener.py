@@ -280,7 +280,7 @@ class iOpenerPathInput():
         Show a quick panel containing the possible completions.
         """
         active_window      = sublime.active_window()
-        directory,filename = split(self.get_text())
+        directory, filename = split(self.get_text())
 
         directory_listing = get_directory_listing(expanduser(directory))
         self.path_cache = get_matches(filename, directory_listing, CASE_SENSITIVE)
@@ -299,8 +299,9 @@ class iOpenerPathInput():
             new_path  = join(directory, self.path_cache[i])
             self.path_cache = None
 
-            if (isdir(expanduser(new_path))):
-                new_path = new_path + sep
+            if isdir(expanduser(new_path)):
+                if not new_path.endswith(sep):
+                    new_path = new_path + sep
                 self.set_text(new_path)
                 sublime.active_window().focus_view(self.view)
             else:
