@@ -2,7 +2,6 @@ from unittest import TestCase
 
 from os.path import isdir, isfile, expanduser, split, relpath, join, commonprefix, normpath
 from os      import listdir, sep, makedirs
-from re import match
 
 
 class COMPLETION_TYPE:
@@ -34,17 +33,6 @@ def get_matches(filename, directory_listing, case_sensitive):
         return [f for f in directory_listing if f.startswith(filename)]
     else:
         return [f for f in directory_listing if f.lower().startswith(filename.lower())]
-
-
-def filter_paths(paths, exclusion_patterns):
-    if not exclusion_patterns:
-        return paths
-    else:
-        return [
-            path
-            for path in paths 
-            if all(match(pattern, path) is None for pattern in exclusion_patterns)
-        ]
 
 
 def longest_completion(filename, matches):
@@ -99,18 +87,6 @@ def lcs(A, B):
 ##
 # Unit tests
 ##
-
-
-class TestExclusion(TestCase):
-    def test1(self):
-        paths = [
-            '.bashrc',
-            '.test',
-            '.',
-            'test',
-        ]
-        exclusions = ['^\..*$']
-        self.assertListEqual(['test'], filter_paths(paths, exclusions))
 
 
 class TestLCSCompletion(TestCase):

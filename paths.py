@@ -1,7 +1,7 @@
 from os.path import isdir, isfile, expanduser, split, relpath, join, commonprefix, normpath
 from os      import listdir, sep, makedirs
-
-from .matching import filter_paths
+from unittest import TestCase
+from re import match
 
 
 HOME_DIRECTORY = '~'
@@ -53,3 +53,31 @@ def get_path_relative_to_home(path):
             return HOME_DIRECTORY + sep
     else:
         return path
+
+
+def filter_paths(paths, exclusion_patterns):
+    if not exclusion_patterns:
+        return paths
+    else:
+        return [
+            path
+            for path in paths 
+            if all(match(pattern, path) is None for pattern in exclusion_patterns)
+        ]
+
+
+##
+# Commands and listeners.
+##
+
+
+class TestExclusion(TestCase):
+    def test1(self):
+        paths = [
+            '.bashrc',
+            '.test',
+            '.',
+            'test',
+        ]
+        exclusions = ['^\..*$']
+        self.assertListEqual(['test'], filter_paths(paths, exclusions))

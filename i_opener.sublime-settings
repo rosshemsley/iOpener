@@ -14,6 +14,6 @@
     // Regular expression patterns to ignore when listing directories. Defaults to ignoring files
     // starting with '.' (hidden files on Linix/Unix/Mac)
     "exclusion_patterns": [
-        "^\\..*$"
-    ]
+        "^\\..*$",
+    ],
 }
