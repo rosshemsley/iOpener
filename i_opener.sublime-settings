@@ -1,6 +1,6 @@
 {
     // Whether or not to consider the project's directory when choosing a path at which to start
-    "use_project_dir": true,
+    "use_project_dir": false,
 
     // Whether to open folders in a new window or add them to the project in the current window
     "open_folders_in_new_window": true,
