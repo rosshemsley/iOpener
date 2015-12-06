@@ -170,7 +170,7 @@ class iOpenerPathInput():
         path = expanduser(path)
 
         # Ignore empty paths.
-        if len(path) == 0:
+        if not path:
             sublime.status_message("Warning: Ignoring empty path.")
             return
 
@@ -185,47 +185,32 @@ class iOpenerPathInput():
 
         # Path doesn't exist, ask the user if they want to create it.
         if not isdir(directory):
-            create = sublime.ok_cancel_dialog(
-                "The path you entered does not exist, create it?","Yes"
-            )
-            # The user cancelled.
-            if not create: return
+            create = sublime.ok_cancel_dialog("The path you entered does not exist, create it?",
+                                              "Yes")
+            if not create:
+                return
             else:
                 try: makedirs(directory)
                 except OSError as e:
-                    sublime.error_message(
-                        "Failed to create path with error: "+str(e)
-                    )
+                    sublime.error_message("Failed to create path with error: " + str(e))
                     return
 
         if isdir(path):
-            # Project folders can not be added using the ST2 API.
             if is_sublime_text_2():
+                # Project folders can not be added using the ST2 API.
                 sublime.status_message("Warning: Opening folders requires ST v3.")
-                return
-            project_data = sublime.active_window().project_data();
-            if OPEN_FOLDERS_IN_NEW_WINDOW:
-                # Open directory in a new window (mirror behaviour of ST).
+            elif OPEN_FOLDERS_IN_NEW_WINDOW:
                 sublime.run_command("new_window")
-                project_data = {"folders":[]}
-                project_data["folders"].append({'follow_symlinks': True, 'path': path})
+                project_data = dict(folders=[dict(follow_symlinks=True, path=path)])
+                sublime.active_window().set_project_data(project_data)
             else:
-                folder = {
-                    'follow_symlinks': True,
-                    'path': path,
-                    'folder_exclude_patterns': ['.*'],
-                }
-                if not project_data:
-                    project_data = {}
+                project_data = sublime.active_window().project_data() or {}
+                project_folders = project_data.get('folders') or []
 
-                if 'folders' in project_data:
-                    for f in project_data['folders']:
-                        if f['path'] == path:
-                            return
+                folder = dict(path=path, follow_symlinks=True, folder_exclude_patterns=['.*'])
+                if all(folder['path'] != path for folder in project_folders):
                     project_data['folders'].append(folder)
-                else:
-                    project_data['folders'] = [folder]
-            sublime.active_window().set_project_data(project_data)
+                sublime.active_window().set_project_data(project_data)
         else:
             # If file doesn't exist, add a message in the status bar.
             if not isfile(path):
