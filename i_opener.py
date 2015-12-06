@@ -37,17 +37,12 @@ def load_settings():
     HISTORY_ENTRIES = settings.get('history_entries')
 
 
-def set_sublime_text_version():
-    """
-    Set which version of Sublime Text has called the plugin.
-    """
-    global SUBLIME_VERSION
+def is_sublime_text_2():
+    return 2000 <= int(sublime.version()) <= 2999
 
-    sub_ver = int(sublime.version())
 
-    if   sub_ver >= 2000 and sub_ver <= 2999: SUBLIME_VERSION = 2
-    elif sub_ver >= 3000 and sub_ver <= 3999: SUBLIME_VERSION = 3
-    else:                                     SUBLIME_VERSION = 0
+def is_sublime_text_3():
+    return 3000 <= int(sublime.version()) <= 3999
 
 
 def get_completion(path):
@@ -205,7 +200,7 @@ class iOpenerPathInput():
 
         if isdir(path):
             # Project folders can not be added using the ST2 API.
-            if SUBLIME_VERSION == 2:
+            if is_sublime_text_2():
                 sublime.status_message("Warning: Opening folders requires ST v3.")
                 return
             project_data = sublime.active_window().project_data();
@@ -352,14 +347,8 @@ class iOpenerCommand(sublime_plugin.WindowCommand):
     input_panel  = None
 
     def run(self):
-        # Set the ST version and check in case of ancient/future versions.
-        set_sublime_text_version()
-        if SUBLIME_VERSION != 2 and SUBLIME_VERSION != 3:
+        if not (is_sublime_text_2() or is_sublime_text_3()):
             print("iOpener plugin is only for Sublime Text v2 and v3.")
-            return
-
-        # Re-load the settings file, which may have changed since last run.
-        load_settings()
-
-        # Create a new input panel, it will display itself.
-        iOpenerCommand.input_panel = iOpenerPathInput()
+        else:
+            load_settings()
+            iOpenerCommand.input_panel = iOpenerPathInput()
