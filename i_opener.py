@@ -10,6 +10,7 @@ from os.path import isdir, isfile, expanduser, split, relpath, join, commonprefi
 from os      import listdir, sep, makedirs
 
 from .matching import complete_path, COMPLETION_TYPE
+from .paths import get_current_directory, directory_listing_with_slahes
 
 # Locations of settings files.
 HISTORY_FILE     = 'i_opener_history.sublime-settings'
@@ -36,7 +37,6 @@ def load_settings():
     HISTORY_ENTRIES = settings.get('history_entries')
 
 
-
 def set_sublime_text_version():
     """
     Set which version of Sublime Text has called the plugin.
@@ -58,7 +58,6 @@ def get_completion(path):
     """
     directory, filename = split(path)
 
-    # Dir doesn't exist
     if not isdir(expanduser(directory)):
         return path, COMPLETION_TYPE.NoMatch
 
@@ -70,36 +69,6 @@ def get_completion(path):
 
     return join(directory, new_filename), completion_type
 
-
-def get_current_path():
-    """
-    Try to give a sensible estimate for 'current directory'.
-    If there is a single folder open, we return that.
-    Else, if there is an active file, return its path.
-    If all else fails, return the home directory.
-    """
-    home    = expanduser("~")
-    view    = sublime.active_window().active_view()
-    folders = sublime.active_window().folders()
-    here    = None
-
-    if USE_PROJECT_DIR and len(folders) == 1:
-        here = folders[0] + sep
-    elif view != None and view.file_name() != None:
-        here = split(view.file_name())[0]
-        if here != sep: here += sep
-    else:
-        here = "~" + sep
-
-    # Return path relative to home if applicable.
-    if len(commonprefix([home, here])) > 1:
-        relative_path = relpath(here,home)
-        if len(relative_path) > 1:
-            return join("~", relpath(here,home)) + sep
-        else:
-            return "~" + sep
-    else:
-        return here
 
 class iOpenerPathInput():
     """
@@ -113,7 +82,11 @@ class iOpenerPathInput():
         self.last_completion_failed = False
         self.path_cache             = None
         active_window               = sublime.active_window()
-        path                        = get_current_path()
+
+        view_filename = active_window.active_view().file_name()
+        folders = active_window.folders()
+
+        path = get_current_directory(view_filename, folders, USE_PROJECT_DIR)
 
         # We only reload the history each time the input window is opened.
         self.history_cache = self.get_history()[0]
@@ -129,7 +102,6 @@ class iOpenerPathInput():
             self.update,
             self.cancel
         )
-
 
     def update(self,text):
         """
@@ -183,7 +155,6 @@ class iOpenerPathInput():
             file_history = file_history[ -HISTORY_ENTRIES :]
         return file_history, history_settings
 
-
     def cancel(self):
         """
         Method called when we exit from the input panel without opening a file.
@@ -191,13 +162,11 @@ class iOpenerPathInput():
         """
         iOpenerCommand.input_panel = None
 
-
     def get_text(self):
         """
         Get current text being displayed by input panel.
         """
         return self.view.substr(sublime.Region(0, self.view.size()))
-
 
     def open_file(self, path):
         """
@@ -269,8 +238,6 @@ class iOpenerPathInput():
             sublime.active_window().open_file(path)
         iOpenerCommand.input_panel = None
 
-
-
     def set_text(self, s):
         """
         Set the text in the file open input panel.
@@ -284,7 +251,7 @@ class iOpenerPathInput():
         active_window      = sublime.active_window()
         directory, filename = split(self.get_text())
 
-        directory_listing = directory_listing_for_quick_panel(expanduser(directory))
+        directory_listing = directory_listing_with_slahes(expanduser(directory))
         self.path_cache = get_matches(filename, directory_listing, CASE_SENSITIVE)
 
         if len(self.path_cache) == 0:
@@ -312,21 +279,6 @@ class iOpenerPathInput():
 
     def append_text(self, s):
         self.view.run_command("i_opener_update", {"append": True, "text": s})
-
-
-def directory_listing_for_quick_panel(path):
-    """
-    Return directory listing with directories annotated.
-    """
-    output = []
-
-    for filename in listdir(path):
-        if isdir(join(path,filename)):
-            output.append(filename + sep)
-        else:
-            output.append(filename)
-
-    return output
 
 
 def show_completion_message(completion_type):
