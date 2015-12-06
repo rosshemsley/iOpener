@@ -34,9 +34,48 @@ def longest_completion(filename, matches):
     return filename + commonprefix(matches)[len(filename):]
 
 
+def lcs(A, B):
+    """
+    Taken and adapted from
+    http://rosettacode.org/wiki/Longest_common_subsequence#Dynamic_Programming_7
+    """
+    lengths = [[0 for j in range(len(B) + 1)] for i in range(len(A) + 1)]
+
+    for i, x in enumerate(A):
+        for j, y in enumerate(B):
+            if x == y:
+                lengths[i + 1][j + 1] = lengths[i][j] + 1
+            else:
+                lengths[i + 1][j + 1] = max(lengths[i + 1][j], lengths[i][j + 1])
+
+    result = ""
+    x, y = len(A), len(B)
+    while x != 0 and y != 0:
+        if lengths[x][y] == lengths[x-1][y]:
+            x -= 1
+        elif lengths[x][y] == lengths[x][y-1]:
+            y -= 1
+        else:
+            result = A[x-1] + result
+            x -= 1
+            y -= 1
+    return result
+
+
 ##
 # Unit tests
 ##
+
+
+class TestLCS(TestCase):
+    def test1(self):
+        self.assertEqual('hel', lcs('hello', 'heal'))
+        self.assertEqual('oe', lcs('hope', 'oe'))
+        self.assertEqual('', lcs('this', 'xyz'))
+        self.assertEqual('bcd', lcs('abcdefg', 'bcd'))
+        self.assertEqual('test', lcs('test', 'test'))
+        self.assertEqual('rd', lcs('read', 'rd'))
+        self.assertEqual('round', lcs('round', 'arounded'))
 
 
 class TestCompletion(TestCase):
