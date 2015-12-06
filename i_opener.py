@@ -24,6 +24,7 @@ STATUS_MESSAGES = {
 
 def load_settings():
     # We set these globals.
+    global EXCLUSION_PATTERNS
     global USE_PROJECT_DIR
     global OPEN_FOLDERS_IN_NEW_WINDOW
     global HISTORY_ENTRIES
@@ -35,6 +36,7 @@ def load_settings():
     OPEN_FOLDERS_IN_NEW_WINDOW = settings.get('open_folders_in_new_window')
     CASE_SENSITIVE  = settings.get('case_sensitive')
     HISTORY_ENTRIES = settings.get('history_entries')
+    EXCLUSION_PATTERNS = settings.get('exclusion_patterns')
 
 
 def is_sublime_text_2():
@@ -231,7 +233,7 @@ class iOpenerPathInput():
         active_window      = sublime.active_window()
         directory, filename = split(self.get_text())
 
-        directory_listing = directory_listing_with_slahes(expanduser(directory))
+        directory_listing = directory_listing_with_slahes(expanduser(directory), EXCLUSION_PATTERNS)
         self.path_cache = get_matches(filename, directory_listing, CASE_SENSITIVE)
 
         if len(self.path_cache) == 0:

@@ -1,11 +1,13 @@
 from os.path import isdir, isfile, expanduser, split, relpath, join, commonprefix, normpath
 from os      import listdir, sep, makedirs
 
+from .matching import filter_paths
+
 
 HOME_DIRECTORY = '~'
 
 
-def directory_listing_with_slahes(path):
+def directory_listing_with_slahes(path, exclusion_patterns=None):
     """
     Return directory listing with directories having trailing slashes.
     """
@@ -17,7 +19,7 @@ def directory_listing_with_slahes(path):
         else:
             output.append(filename)
 
-    return output
+    return filter_paths(output, exclusion_patterns)
 
 
 def get_current_directory(view_filename, folders, use_project_dir):
