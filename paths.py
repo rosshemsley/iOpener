@@ -1,11 +1,13 @@
 from os.path import isdir, isfile, expanduser, split, relpath, join, commonprefix, normpath
 from os      import listdir, sep, makedirs
+from unittest import TestCase
+from re import match
 
 
 HOME_DIRECTORY = '~'
 
 
-def directory_listing_with_slahes(path):
+def directory_listing_with_slahes(path, exclusion_patterns=None):
     """
     Return directory listing with directories having trailing slashes.
     """
@@ -17,7 +19,7 @@ def directory_listing_with_slahes(path):
         else:
             output.append(filename)
 
-    return output
+    return filter_paths(output, exclusion_patterns)
 
 
 def get_current_directory(view_filename, folders, use_project_dir):
@@ -51,3 +53,31 @@ def get_path_relative_to_home(path):
             return HOME_DIRECTORY + sep
     else:
         return path
+
+
+def filter_paths(paths, exclusion_patterns):
+    if not exclusion_patterns:
+        return paths
+    else:
+        return [
+            path
+            for path in paths 
+            if all(match(pattern, path) is None for pattern in exclusion_patterns)
+        ]
+
+
+##
+# Commands and listeners.
+##
+
+
+class TestExclusion(TestCase):
+    def test1(self):
+        paths = [
+            '.bashrc',
+            '.test',
+            '.',
+            'test',
+        ]
+        exclusions = ['^\..*$']
+        self.assertListEqual(['test'], filter_paths(paths, exclusions))

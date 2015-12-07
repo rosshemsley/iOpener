@@ -24,6 +24,7 @@ STATUS_MESSAGES = {
 
 def load_settings():
     # We set these globals.
+    global EXCLUSION_PATTERNS
     global USE_PROJECT_DIR
     global OPEN_FOLDERS_IN_NEW_WINDOW
     global HISTORY_ENTRIES
@@ -35,6 +36,7 @@ def load_settings():
     OPEN_FOLDERS_IN_NEW_WINDOW = settings.get('open_folders_in_new_window')
     CASE_SENSITIVE  = settings.get('case_sensitive')
     HISTORY_ENTRIES = settings.get('history_entries')
+    EXCLUSION_PATTERNS = settings.get('exclusion_patterns')
 
 
 def is_sublime_text_2():
@@ -52,14 +54,15 @@ def get_completion(path):
     Find filename and directory.
     """
     directory, filename = split(path)
+    expanded_directory = expanduser(directory)
 
-    if not isdir(expanduser(directory)):
+    if not isdir(expanded_directory):
         return path, COMPLETION_TYPE.NoMatch
 
-    directory_listing = listdir(expanduser(directory))
+    directory_listing = listdir(expanded_directory)
     new_filename, completion_type = complete_path(filename, directory_listing, CASE_SENSITIVE)
 
-    if new_filename != '' and isdir(expanduser(join(directory, new_filename))):
+    if new_filename not in {'', '.'} and isdir(join(expanded_directory, new_filename)):
         new_filename += sep
 
     return join(directory, new_filename), completion_type
@@ -231,7 +234,12 @@ class iOpenerPathInput():
         active_window      = sublime.active_window()
         directory, filename = split(self.get_text())
 
-        directory_listing = directory_listing_with_slahes(expanduser(directory))
+        if not filename:
+            exclusions = EXCLUSION_PATTERNS
+        else:
+            exclusions = None
+
+        directory_listing = directory_listing_with_slahes(expanduser(directory), exclusions)
         self.path_cache = get_matches(filename, directory_listing, CASE_SENSITIVE)
 
         if len(self.path_cache) == 0:
