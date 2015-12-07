@@ -15,5 +15,7 @@
     // starting with '.' (hidden files on Linix/Unix/Mac)
     "exclusion_patterns": [
         "^\\..*$",
+        // "^.*\\.pyc$",
+        // "^.*\\.zip$",
     ],
 }
