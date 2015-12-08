@@ -8,9 +8,19 @@ Written by Ross Hemsley and other collaborators 2013.
 import sublime, sublime_plugin, time
 from os.path import isdir, isfile, expanduser, split, relpath, join, commonprefix, normpath
 from os      import listdir, sep, makedirs
+from sys     import version_info
 
-from .matching import complete_path, COMPLETION_TYPE, get_matches
-from .paths import get_current_directory, directory_listing_with_slahes
+# Version specific import. Note sure if this is required due to differences in
+# the way ST v2 and v3 load packages or due to the different Python versions.
+# Note: Do not use the 'major' attribute, Python v2.7+ only, ST2 uses v2.6.
+python_version_major = version_info[0]
+
+if python_version_major == 3:
+    from .matching import complete_path, COMPLETION_TYPE, get_matches
+    from .paths import get_current_directory, directory_listing_with_slahes
+elif python_version_major == 2:
+    from matching import complete_path, COMPLETION_TYPE, get_matches
+    from paths import get_current_directory, directory_listing_with_slahes
 
 # Locations of settings files.
 HISTORY_FILE     = 'i_opener_history.sublime-settings'
