@@ -10,17 +10,18 @@ from os.path import isdir, isfile, expanduser, split, relpath, join, commonprefi
 from os      import listdir, sep, makedirs
 from sys     import version_info
 
-# Version specific import. Note sure if this is required due to differences in
+# Version specific import. Not sure if this is required due to differences in
 # the way ST v2 and v3 load packages or due to the different Python versions.
-# Note: Do not use the 'major' attribute, Python v2.7+ only, ST2 uses v2.6.
+
+# Do not use the "major" attribute, Python v2.7+ only, ST2 uses v2.6.
 python_version_major = version_info[0]
 
 if python_version_major == 3:
     from .matching import complete_path, COMPLETION_TYPE, get_matches
-    from .paths import get_current_directory, directory_listing_with_slahes
+    from .paths import directory_listing_with_slahes, get_path_to_home, get_path_relative_to_home
 elif python_version_major == 2:
     from matching import complete_path, COMPLETION_TYPE, get_matches
-    from paths import get_current_directory, directory_listing_with_slahes
+    from paths import directory_listing_with_slahes, get_path_to_home, get_path_relative_to_home
 
 # Locations of settings files.
 HISTORY_FILE     = 'i_opener_history.sublime-settings'
@@ -32,19 +33,21 @@ STATUS_MESSAGES = {
     COMPLETION_TYPE.Complete: None,
 }
 
+
 def load_settings():
-    # We set these globals.
-    global USE_PROJECT_DIR
     global OPEN_FOLDERS_IN_NEW_WINDOW
     global HISTORY_ENTRIES
     global CASE_SENSITIVE
+    global FOLDER_SEQUENCE
+    global USER_FOLDERS
 
     settings = sublime.load_settings(SETTINGS_FILE)
 
-    USE_PROJECT_DIR = settings.get('use_project_dir')
     OPEN_FOLDERS_IN_NEW_WINDOW = settings.get('open_folders_in_new_window')
     CASE_SENSITIVE  = settings.get('case_sensitive')
     HISTORY_ENTRIES = settings.get('history_entries')
+    FOLDER_SEQUENCE = settings.get('folder_sequence', [])
+    USER_FOLDERS    = settings.get('folders', [])
 
 
 def is_sublime_text_2():
@@ -77,8 +80,8 @@ def get_completion(path):
 
 class iOpenerPathInput():
     """
-    This class encapsulates the behaviors relating to the file open panel
-    used by the package. We create an instance when the panel is open, and destroy
+    This class encapsulates the behaviors relating to the file open panel used
+    by the package. We create an instance when the panel is open, and destroy
     it when the panel is closed.
     """
     def __init__(self):
@@ -86,21 +89,22 @@ class iOpenerPathInput():
         # If they press tab again, we show them a list of files.
         self.last_completion_failed = False
         self.path_cache             = None
-        active_window               = sublime.active_window()
 
-        view_filename = active_window.active_view().file_name()
-        folders = active_window.folders()
+        # Initiate the folders list.
+        self.folder_cache = self.get_folders()
+        self.folder_index = 0
 
-        path = get_current_directory(view_filename, folders, USE_PROJECT_DIR)
+        # Set the first folder to be displayed.
+        path = self.folder_cache[0]
 
         # We only reload the history each time the input window is opened.
         self.history_cache = self.get_history()[0]
 
-        # Store default at end of history cache and 'select' it.
+        # Store displayed folder at end of history cache and 'select' it.
         self.history_cache.append(path)
-        self.history_index = len(self.history_cache)-1
+        self.history_index = len(self.history_cache) - 1
 
-        self.view          = active_window.show_input_panel(
+        self.view = sublime.active_window().show_input_panel(
             "Find file: ",
             path,
             self.open_file,
@@ -108,11 +112,77 @@ class iOpenerPathInput():
             self.cancel
         )
 
+
     def update(self,text):
         """
         If the user updates the input, reset the 'failed completion' flag.
         """
         self.last_completion_failed = False
+
+
+    def get_folders(self):
+        """
+        Build the folder list from the various possible folder locations. i.e.
+        home, folder of current file, project folders, user defined folders.
+        """
+        active_window = sublime.active_window()
+        active_view = active_window.active_view()
+
+        # The order in which folders are added to the list will be the order in
+        # which they are displayed. The sequence in which the folders are added
+        # is specified in the settings file and stored in FOLDER_SEQUENCE.
+
+        folders = []
+
+        for item in FOLDER_SEQUENCE:
+
+            if item == "home":
+                path = get_path_to_home()
+                if path not in folders: folders.append(path)
+
+            elif item == "file":
+                view_filename = active_view.file_name()
+                if view_filename is not None:
+                    view_folder = split(view_filename)[0]
+                    path = get_path_relative_to_home(view_folder)
+                    if path not in folders: folders.append(path)
+
+            elif item == "project":
+                project_folders = active_window.folders()
+                for folder in project_folders:
+                    path = get_path_relative_to_home(folder)
+                    if path not in folders: folders.append(path)
+
+            elif item == "user":
+                for folder in USER_FOLDERS:
+                    path = get_path_relative_to_home(folder)
+                    if path not in folders: folders.append(path)
+
+        # Fail-safe: If empty then fall back on the home folder.
+        if len(folders) == 0:
+            path = get_path_to_home()
+            folders.append(path)
+
+        return folders
+
+
+    def goto_prev_folder(self):
+        self.folder_cache[self.folder_index] = self.get_text()
+        self.folder_index -= 1
+        if self.folder_index < 0:
+            sublime.status_message("Reached start of folder list")
+            self.folder_index = 0
+        self.set_text(self.folder_cache[self.folder_index])
+
+
+    def goto_next_folder(self):
+        self.folder_cache[self.folder_index] = self.get_text()
+        self.folder_index += 1
+        if self.folder_index == len(self.folder_cache):
+            sublime.status_message("Reached end of folder list")
+            self.folder_index = len(self.folder_cache) - 1
+        self.set_text(self.folder_cache[self.folder_index])
+
 
     def goto_prev_history(self):
         """
@@ -125,6 +195,7 @@ class iOpenerPathInput():
             self.history_index = 0
         self.set_text( self.history_cache [ self.history_index] )
 
+
     def goto_next_history(self):
         # Temporarily store any changes in cache, as bash does.
         self.history_cache[self.history_index] = self.get_text()
@@ -133,6 +204,7 @@ class iOpenerPathInput():
             sublime.status_message("Reached end of history")
             self.history_index = len(self.history_cache)-1
         self.set_text( self.history_cache [ self.history_index] )
+
 
     def add_to_history(self,path):
         file_history, history_settings = self.get_history()
@@ -150,6 +222,7 @@ class iOpenerPathInput():
         history_settings.set("file_history", file_history)
         sublime.save_settings(HISTORY_FILE)
 
+
     def get_history(self):
         history_settings = sublime.load_settings(HISTORY_FILE)
         file_history     = history_settings.get("file_history")
@@ -160,6 +233,7 @@ class iOpenerPathInput():
             file_history = file_history[ -HISTORY_ENTRIES :]
         return file_history, history_settings
 
+
     def cancel(self):
         """
         Method called when we exit from the input panel without opening a file.
@@ -167,11 +241,13 @@ class iOpenerPathInput():
         """
         iOpenerCommand.input_panel = None
 
+
     def get_text(self):
         """
         Get current text being displayed by input panel.
         """
         return self.view.substr(sublime.Region(0, self.view.size()))
+
 
     def open_file(self, path):
         """
@@ -228,11 +304,13 @@ class iOpenerPathInput():
             sublime.active_window().open_file(path)
         iOpenerCommand.input_panel = None
 
+
     def set_text(self, s):
         """
         Set the text in the file open input panel.
         """
         self.view.run_command("i_opener_update", {"append": False, "text": s})
+
 
     def show_completions(self):
         """
@@ -248,6 +326,7 @@ class iOpenerPathInput():
             show_completion_message(COMPLETION_TYPE.NoMatch)
         else:
             active_window.show_quick_panel(self.path_cache, self.on_done)
+
 
     def on_done(self, i):
         if self.path_cache is None:
@@ -266,6 +345,7 @@ class iOpenerPathInput():
                 sublime.active_window().run_command("hide_panel", {"cancel": True})
         else:
             sublime.active_window().focus_view(self.view)
+
 
     def append_text(self, s):
         self.view.run_command("i_opener_update", {"append": True, "text": s})
@@ -333,6 +413,15 @@ class iOpenerCycleHistoryCommand(sublime_plugin.WindowCommand):
         elif direction == "down": iOpenerCommand.input_panel.goto_next_history()
 
 
+class iOpenerFolderListCommand(sublime_plugin.WindowCommand):
+    """
+    Receive requests for folder list operations.
+    """
+    def run(self, direction):
+        if   direction == "up":   iOpenerCommand.input_panel.goto_next_folder()
+        elif direction == "down": iOpenerCommand.input_panel.goto_prev_folder()
+
+
 class iOpenerCommand(sublime_plugin.WindowCommand):
     """
     This is the command caled by the UI.
@@ -342,6 +431,7 @@ class iOpenerCommand(sublime_plugin.WindowCommand):
     input_panel  = None
 
     def run(self):
+
         if not (is_sublime_text_2() or is_sublime_text_3()):
             print("iOpener plugin is only for Sublime Text v2 and v3.")
         else:

@@ -20,24 +20,8 @@ def directory_listing_with_slahes(path):
     return output
 
 
-def get_current_directory(view_filename, folders, use_project_dir):
-    """
-    Try to give a sensible estimate for 'current directory'.
-    If there is a single folder open, we return that.
-    Else, if there is an active file, return its path.
-    If all else fails, return the home directory.
-    """
-    if folders and use_project_dir:
-        directory = folders[0]
-    elif view_filename is not None:
-        directory, _ = split(view_filename)
-    else:
-        directory = HOME_DIRECTORY
-
-    if directory != sep:
-        directory += sep
-
-    return get_path_relative_to_home(directory)
+def get_path_to_home():
+    return HOME_DIRECTORY + sep
 
 
 def get_path_relative_to_home(path):
@@ -49,5 +33,9 @@ def get_path_relative_to_home(path):
             return join(HOME_DIRECTORY, relpath(path, home)) + sep
         else:
             return HOME_DIRECTORY + sep
-    else:
+
+    elif path.endswith(sep):
         return path
+
+    else:
+        return path + sep
