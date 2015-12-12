@@ -1,7 +1,4 @@
 {
-    // Whether or not to consider the project's directory when choosing a path at which to start
-    "use_project_dir": false,
-
     // Whether to open folders in a new window or add them to the project in the current window
     "open_folders_in_new_window": true,
 
@@ -9,5 +6,40 @@
     "case_sensitive": false,
 
     // Number of entries to store in history.
-    "history_entries": 30
+    "history_entries": 30,
+
+    // "folder_sequence" sets which folders will be added to the folder list and the order those
+    // folders will be displayed in when scrolling through the folder list. Each folder will be
+    // added only once, the first time it is encountered.
+    //
+    // Possible values; use any or all of the following and in any order you want:
+    //
+    // "home"    : user's home folder.
+    // "file"    : folder of the current file (if there is one).
+    // "project" : folders added to the current project (if any).
+    // "user"    : folders added to the "folders" entry in this file (if any).
+    //
+    // e.g.
+    // "folder_sequence": ["home", "file", "project", "user"],
+
+    "folder_sequence": ["home", "file", "project", "user"],
+
+    // "folders" sets which folders to add to the folder list when "user" is entered in the
+    // "folder_sequence" or when the 'user folders' key binding is pressed. Use the full path
+    // or the home prefix and add as many as you want.
+    //
+    // e.g.
+    // "folders":
+    // [
+    //     "~/Path/To/Folder/In/Home/",
+    //     "/Full/Path/To/Folder/"
+    //
+    //     In Windows the backslashes must be escaped.
+    //     "~\\Path\\To\\Folder\\In\\Home\\",
+    //     "c:\\Full\\Path\\To\\Folder\\"
+    // ],
+
+    "folders":
+    [
+    ]
 }
