@@ -60,7 +60,7 @@ def is_sublime_text_3():
 
 def get_completion(path):
     """
-    Function to find and return longest possile completion for a path p from a
+    Function to find and return longest possible completion for a path p from a
     list of candidates l. Returns new_path, status, completed.
     Find filename and directory.
     """
@@ -90,23 +90,33 @@ class iOpenerPathInput():
         self.last_completion_failed = False
         self.path_cache             = None
 
-        # Initiate the folders list.
-        self.folder_cache = self.get_folders()
+        # Define and populate the various folders and folder lists.
+        self.home_folder = None
+        self.file_folder = None
+        self.project_folders = []
+        self.user_folders = []
+        self.folder_sequence_folders = []
+        self.set_folders()
+
+        # self.folder_cache holds whatever folder list is currently active.
+        # Set it to initially hold the the folders list created from the
+        # settings file "folder_sequence" setting.
         self.folder_index = 0
+        self.folder_cache = self.folder_sequence_folders
 
         # Set the first folder to be displayed.
-        path = self.folder_cache[0]
+        display_folder = self.folder_cache[0]
 
         # We only reload the history each time the input window is opened.
         self.history_cache = self.get_history()[0]
 
         # Store displayed folder at end of history cache and 'select' it.
-        self.history_cache.append(path)
+        self.history_cache.append(display_folder)
         self.history_index = len(self.history_cache) - 1
 
         self.view = sublime.active_window().show_input_panel(
             "Find file: ",
-            path,
+            display_folder,
             self.open_file,
             self.update,
             self.cancel
@@ -120,50 +130,113 @@ class iOpenerPathInput():
         self.last_completion_failed = False
 
 
-    def get_folders(self):
+    def set_folders(self):
         """
-        Build the folder list from the various possible folder locations. i.e.
-        home, folder of current file, project folders, user defined folders.
+        Populate the class folder variables.
         """
         active_window = sublime.active_window()
         active_view = active_window.active_view()
 
-        # The order in which folders are added to the list will be the order in
-        # which they are displayed. The sequence in which the folders are added
-        # is specified in the settings file and stored in FOLDER_SEQUENCE.
+        self.home_folder = get_path_to_home()
+
+        view_filename = active_view.file_name()
+        if view_filename is not None:
+            view_folder = split(view_filename)[0]
+            self.file_folder = get_path_relative_to_home(view_folder)
+
+        folders = active_window.folders()
+        for folder in folders:
+            path = get_path_relative_to_home(folder)
+            self.project_folders.append(path)
+
+        for folder in USER_FOLDERS:
+            path = get_path_relative_to_home(folder)
+            self.user_folders.append(path)
+
+        self.folder_sequence_folders = self.get_folder_sequence_folders()
+
+
+    def get_folder_sequence_folders(self):
+        """
+        Build a list of folders using the keys specified in the settings file
+        "folder_sequence" setting. The order in which folders are added to the
+        list will be the order in which they are displayed.
+        """
 
         folders = []
 
         for item in FOLDER_SEQUENCE:
 
             if item == "home":
-                path = get_path_to_home()
-                if path not in folders: folders.append(path)
+                if self.home_folder not in folders:
+                    folders.append(self.home_folder)
 
             elif item == "file":
-                view_filename = active_view.file_name()
-                if view_filename is not None:
-                    view_folder = split(view_filename)[0]
-                    path = get_path_relative_to_home(view_folder)
-                    if path not in folders: folders.append(path)
+                if self.file_folder is not None:
+                    if self.file_folder not in folders:
+                        folders.append(self.file_folder)
 
             elif item == "project":
-                project_folders = active_window.folders()
-                for folder in project_folders:
-                    path = get_path_relative_to_home(folder)
-                    if path not in folders: folders.append(path)
+                for folder in self.project_folders:
+                    if folder not in folders:
+                        folders.append(folder)
 
             elif item == "user":
-                for folder in USER_FOLDERS:
-                    path = get_path_relative_to_home(folder)
-                    if path not in folders: folders.append(path)
+                for folder in self.user_folders:
+                    if folder not in folders:
+                        folders.append(folder)
 
-        # Fail-safe: If empty then fall back on the home folder.
+        # Fail-safe: If empty then use the home folder as a fall back.
         if len(folders) == 0:
-            path = get_path_to_home()
-            folders.append(path)
+            folders.append(self.home_folder)
 
         return folders
+
+
+    def show_home_folder(self):
+        self.folder_cache = []
+        self.folder_cache.append(self.home_folder)
+        self.folder_index = 0
+        self.set_text(self.folder_cache[self.folder_index])
+        sublime.status_message("Changing to: home folder")
+
+
+    def show_file_folder(self):
+        if self.file_folder is not None:
+            self.folder_cache = []
+            self.folder_cache.append(self.file_folder)
+            self.folder_index = 0
+            self.set_text(self.folder_cache[self.folder_index])
+            sublime.status_message("Changing to: folder of open file")
+        else:
+            sublime.status_message("No open file folder available")
+
+
+    def show_project_folders(self):
+        if len(self.project_folders) > 0:
+            self.folder_cache = self.project_folders
+            self.folder_index = 0
+            self.set_text(self.folder_cache[self.folder_index])
+            sublime.status_message("Changing to: project folder(s)")
+        else:
+            sublime.status_message("No project folders available")
+
+
+    def show_user_folders(self):
+        if len(self.user_folders) > 0:
+            self.folder_cache = self.user_folders
+            self.folder_index = 0
+            self.set_text(self.folder_cache[self.folder_index])
+            sublime.status_message("Changing to: user defined folder(s)")
+        else:
+            sublime.status_message("No user defined folders available")
+
+
+    def show_folder_sequence_folders(self):
+        self.folder_cache = self.folder_sequence_folders
+        self.folder_index = 0
+        self.set_text(self.folder_cache[self.folder_index])
+        sublime.status_message("Changing to: folder sequence folder(s)")
 
 
     def goto_prev_folder(self):
@@ -417,23 +490,42 @@ class iOpenerFolderListCommand(sublime_plugin.WindowCommand):
     """
     Receive requests for folder list operations.
     """
-    def run(self, direction):
-        if   direction == "up":   iOpenerCommand.input_panel.goto_next_folder()
-        elif direction == "down": iOpenerCommand.input_panel.goto_prev_folder()
+    def run(self, operation):
+
+        if operation == "scroll_up":
+            iOpenerCommand.input_panel.goto_next_folder()
+
+        elif operation == "scroll_down":
+            iOpenerCommand.input_panel.goto_prev_folder()
+
+        elif operation == "show_home_folder":
+            iOpenerCommand.input_panel.show_home_folder()
+
+        elif operation == "show_file_folder":
+            iOpenerCommand.input_panel.show_file_folder()
+
+        elif operation == "show_project_folders":
+            iOpenerCommand.input_panel.show_project_folders()
+
+        elif operation == "show_user_folders":
+            iOpenerCommand.input_panel.show_user_folders()
+
+        elif operation == "show_folder_sequence_folders":
+            iOpenerCommand.input_panel.show_folder_sequence_folders()
 
 
 class iOpenerCommand(sublime_plugin.WindowCommand):
     """
-    This is the command caled by the UI.
-    input_panel contains an instance of the class iOpenerPathInput when the input is
-    active, otherwise it contains None.
+    This is the command called by the UI. input_panel contains an instance of
+    the class iOpenerPathInput when the input is active, otherwise it contains
+    None.
     """
     input_panel  = None
 
     def run(self):
 
-        if not (is_sublime_text_2() or is_sublime_text_3()):
-            print("iOpener plugin is only for Sublime Text v2 and v3.")
-        else:
+        if (is_sublime_text_2() or is_sublime_text_3()):
             load_settings()
             iOpenerCommand.input_panel = iOpenerPathInput()
+        else:
+            print("iOpener plugin is only for Sublime Text v2 and v3.")

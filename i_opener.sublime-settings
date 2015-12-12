@@ -25,7 +25,8 @@
     "folder_sequence": ["home", "file", "project", "user"],
 
     // "folders" sets which folders to add to the folder list when "user" is entered in the
-    // "folder_sequence". Use the full path or the home prefix and add as many as you want.
+    // "folder_sequence" or when the 'user folders' key binding is pressed. Use the full path
+    // or the home prefix and add as many as you want.
     //
     // e.g.
     // "folders":
