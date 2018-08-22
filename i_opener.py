@@ -208,7 +208,11 @@ class iOpenerPathInput():
                 project_folders = project_data.get('folders') or []
 
                 folder = dict(path=path, follow_symlinks=True, folder_exclude_patterns=['.*'])
-                if all(folder['path'] != path for folder in project_folders):
+
+                # if project_data == {}, no project is open.
+                if project_data == {}:
+                    project_data = dict(folders=[dict(follow_symlinks=True, path=path)])
+                elif all(folder['path'] != path for folder in project_folders):
                     project_data['folders'].append(folder)
                 sublime.active_window().set_project_data(project_data)
         else:
