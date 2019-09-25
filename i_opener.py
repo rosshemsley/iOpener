@@ -5,12 +5,16 @@ Licensed under GPL V2.
 Written by Ross Hemsley and other collaborators 2013.
 """
 
-import sublime, sublime_plugin, time
+import sublime, sublime_plugin, time, re, logging, sys
 from os.path import isdir, isfile, expanduser, split, relpath, join, commonprefix, normpath
 from os      import listdir, sep, makedirs
 
 from .matching import complete_path, COMPLETION_TYPE, get_matches
 from .paths import get_current_directory, directory_listing_with_slahes
+
+
+rePath = re.compile(r'(\(.*\) )([~|/].*)')
+logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 
 # Locations of settings files.
 HISTORY_FILE     = 'i_opener_history.sublime-settings'
@@ -21,6 +25,7 @@ STATUS_MESSAGES = {
     COMPLETION_TYPE.NoMatch: 'No match',
     COMPLETION_TYPE.Complete: None,
 }
+
 
 def load_settings():
     # We set these globals.
@@ -102,6 +107,12 @@ class iOpenerPathInput():
         """
         If the user updates the input, reset the 'failed completion' flag.
         """
+        logging.debug("Update:", text)
+        if text[-2:] == '//' or text[-2:] == '/~':
+            self.set_text('(' + text[:-1] + ') ' + text[-1])
+        elif text[-2:] == ') ':
+            self.set_text(text[1:-2])
+
         self.last_completion_failed = False
 
     def goto_prev_history(self):
@@ -161,12 +172,26 @@ class iOpenerPathInput():
         """
         Get current text being displayed by input panel.
         """
-        return self.view.substr(sublime.Region(0, self.view.size()))
+        path = self.view.substr(sublime.Region(0, self.view.size()))
+        m = rePath.match(path)
+        if m:
+            path = m.group(2, 1)
+        else:
+            path = (path, None)
+            
+        logging.debug("Get:", path)
+        return path
 
     def open_file(self, path):
         """
         Open the given path. Can be a directory OR a file.
         """
+        logging.debug("Open File:", path)
+
+        m = rePath.match(path)
+        if m:
+            path = m.group(2)
+        
         path = expanduser(path)
 
         # Ignore empty paths.
@@ -222,6 +247,7 @@ class iOpenerPathInput():
         """
         Set the text in the file open input panel.
         """
+        logging.debug("Set:",s)
         self.view.run_command("i_opener_update", {"append": False, "text": s})
 
     def show_completions(self):
@@ -229,7 +255,8 @@ class iOpenerPathInput():
         Show a quick panel containing the possible completions.
         """
         active_window      = sublime.active_window()
-        directory, filename = split(self.get_text())
+        path, old_path = self.get_text()
+        directory, filename = split(path)
 
         directory_listing = directory_listing_with_slahes(expanduser(directory))
         self.path_cache = get_matches(filename, directory_listing, CASE_SENSITIVE)
@@ -244,12 +271,13 @@ class iOpenerPathInput():
             return
 
         elif i != -1:
-            directory, _ = split(self.get_text())
+            path, old_path = self.get_text()
+            directory, _ = split(path)
             new_path  = join(directory, self.path_cache[i])
             self.path_cache = None
 
             if isdir(expanduser(new_path)):
-                self.set_text(new_path)
+                self.set_text(old_path + new_path)
                 sublime.active_window().focus_view(self.view)
             else:
                 self.open_file(new_path)
@@ -258,6 +286,7 @@ class iOpenerPathInput():
             sublime.active_window().focus_view(self.view)
 
     def append_text(self, s):
+        logging.debug("Append:",s)
         self.view.run_command("i_opener_update", {"append": True, "text": s})
 
 
@@ -291,6 +320,7 @@ class iOpenerUpdateCommand(sublime_plugin.TextCommand):
     The edit command used for editing the text in the input panel.
     """
     def run(self, edit, append, text):
+        logging.debug("Update Command:", edit, append, text)
         if append: self.view.insert(edit, self.view.size(), text)
         else: self.view.replace(edit, sublime.Region(0,self.view.size()), text)
 
@@ -306,9 +336,10 @@ class iOpenerCompleteCommand(sublime_plugin.WindowCommand):
             input_panel.last_completion_failed = False
             input_panel.show_completions()
         else:
-            completion, completion_type = get_completion(input_panel.get_text())
+            path, old_path = input_panel.get_text()
+            completion, completion_type = get_completion(path)
             show_completion_message(completion_type)
-            input_panel.set_text(completion)
+            input_panel.set_text(old_path + completion)
 
             completion_failed = completion_type != COMPLETION_TYPE.Complete
             input_panel.last_completion_failed = completion_failed
