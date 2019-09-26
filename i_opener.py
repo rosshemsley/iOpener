@@ -13,6 +13,13 @@ from .matching import complete_path, COMPLETION_TYPE, get_matches
 from .paths import get_current_directory, directory_listing_with_slahes
 
 
+try:
+    from dired.show import show
+except ImportError:
+    support_dired = False
+else:
+    support_dired = True
+
 rePath = re.compile(r'(\(.*\) )([~|/].*)')
 logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 
@@ -31,6 +38,7 @@ def load_settings():
     # We set these globals.
     global USE_PROJECT_DIR
     global OPEN_FOLDERS_IN_NEW_WINDOW
+    global OPEN_FOLDERS_IN_DIRED
     global HISTORY_ENTRIES
     global CASE_SENSITIVE
 
@@ -38,6 +46,7 @@ def load_settings():
 
     USE_PROJECT_DIR = settings.get('use_project_dir')
     OPEN_FOLDERS_IN_NEW_WINDOW = settings.get('open_folders_in_new_window')
+    OPEN_FOLDERS_IN_DIRED = settings.get('open_folders_in_dired')
     CASE_SENSITIVE  = settings.get('case_sensitive')
     HISTORY_ENTRIES = settings.get('history_entries')
 
@@ -228,6 +237,8 @@ class iOpenerPathInput():
                 sublime.run_command("new_window")
                 project_data = dict(folders=[dict(follow_symlinks=True, path=path)])
                 sublime.active_window().set_project_data(project_data)
+            elif OPEN_FOLDERS_IN_DIRED and support_dired:
+                show(sublime.active_window(), directory)
             else:
                 project_data = sublime.active_window().project_data() or {}
                 project_folders = project_data.get('folders') or []

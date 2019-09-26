@@ -5,6 +5,10 @@
     // Whether to open folders in a new window or add them to the project in the current window
     "open_folders_in_new_window": true,
 
+    // If open_folder_in_new_window is false and you have the dired package installed, 
+    // set this to true to open directories in dired
+    "open_folders_in_dired": false,
+
     // Whether or not to ignore case when completing.
     "case_sensitive": false,
 
