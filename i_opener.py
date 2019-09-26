@@ -32,7 +32,7 @@ else:
     support_dired = True
 
 rePath = re.compile(r'(\(.*\) )([~|/].*)')
-logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
+logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 
 # Locations of settings files.
 HISTORY_FILE     = 'i_opener_history.sublime-settings'
