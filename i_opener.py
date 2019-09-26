@@ -21,7 +21,7 @@ else:
     support_dired = True
 
 rePath = re.compile(r'(\(.*\) )([~|/].*)')
-logging.basicConfig(stream=sys.stderr, level=logging.INFO)
+logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
 # Locations of settings files.
 HISTORY_FILE     = 'i_opener_history.sublime-settings'
@@ -73,7 +73,7 @@ def get_completion(path):
     directory_listing = listdir(expanduser(directory))
     new_filename, completion_type = complete_path(filename, directory_listing, CASE_SENSITIVE)
 
-    if new_filename != '' and isdir(expanduser(join(directory, new_filename))):
+    if new_filename != '' and isdir(expanduser(join(directory, new_filename))) and completion_type != COMPLETION_TYPE.CompleteButNotUnique:
         new_filename += sep
 
     return join(directory, new_filename), completion_type
@@ -186,7 +186,7 @@ class iOpenerPathInput():
         if m:
             path = m.group(2, 1)
         else:
-            path = (path, None)
+            path = (path, '')
             
         logging.debug("Get:", path)
         return path
@@ -245,7 +245,7 @@ class iOpenerPathInput():
 
                 folder = dict(path=path, follow_symlinks=True, folder_exclude_patterns=['.*'])
                 if all(folder['path'] != path for folder in project_folders):
-                    project_data.set_default('folders', []).append(folder)
+                    project_data.setdefault('folders', []).append(folder)
                 sublime.active_window().set_project_data(project_data)
         else:
             # If file doesn't exist, add a message in the status bar.
