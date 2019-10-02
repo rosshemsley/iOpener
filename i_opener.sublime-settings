@@ -18,15 +18,15 @@
     //
     // Possible values; use any or all of the following and in any order you want:
     //
-    // "home"    : user's home folder.
     // "file"    : folder of the current file (if there is one).
     // "project" : folders added to the current project (if any).
     // "user"    : folders added to the "folders" entry in this file (if any).
+    // "home"    : user's home folder.
     //
     // e.g.
-    // "folder_sequence": ["home", "file", "project", "user"],
+    // "folder_sequence": ["file", "project", "user", "home"],
 
-    "folder_sequence": ["home", "file", "project", "user"],
+    "folder_sequence": ["file", "project", "user", "home"],
 
     // "folders" sets which folders to add to the folder list when "user" is entered in the
     // "folder_sequence" or when the 'user folders' key binding is pressed. Use the full path
@@ -43,7 +43,5 @@
     //     "c:\\Full\\Path\\To\\Folder\\"
     // ],
 
-    "folders":
-    [
-    ]
+    "folders": []
 }
