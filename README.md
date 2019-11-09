@@ -16,6 +16,20 @@ Use `cmd + o` or `cntl + o` as usual (or choose `Find File` in the command palle
 
 - Opening a path that doesn't exist will create a new file or directory
 
+Certain paths are available with shortcuts
+
+- Press `ctrl + h` to auto-fill your home directory
+
+- Press `ctrl + f` to auto-fill the folder of the current file
+
+- Press `ctrl + p` to auto-fill and cycle through the current project folders
+
+- Press `ctrl + u` to auto-fill and cycle through user-defined folders in settings
+
+- Press `ctrl + a` to cycle through all of these, based on the order you specify in settings
+
+- Use `ctrl + up` and `ctrl + down` to cycle through the folder lists
+
 ![demo](https://raw.github.com/rosshemsley/iOpener/screenshots/demo.gif)
 
 NB

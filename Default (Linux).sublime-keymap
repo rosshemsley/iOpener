@@ -1,30 +1,88 @@
 [
     // Steal open command and use it for iOpener.
     { "keys": ["ctrl+o"], "command": "i_opener" },
-    
+
     // Allow over-riding of iOpener, and show normal system dialog.
-    { "keys": ["ctrl+shift+o"], "command": "prompt_open_file" },  
+    { "keys": ["ctrl+shift+o"], "command": "prompt_open_file" },
 
+    // Be especially careful editing the settings below.
 
-    ////////////////////////////////////////////////////////////////////////////
-    // Do not edit //
-    ////////////////////////////////////////////////////////////////////////////
+    // Auto-complete path key.
     {
         "keys": ["tab"],
         "command": "i_opener_complete",
         "context": [{"key": "i_opener"}]
     },
+
+    // Scroll up through history.
     {
         "keys": ["up"],
         "command": "i_opener_cycle_history",
         "context": [{"key": "i_opener"}],
         "args": {"direction": "up"}
     },
+
+    // Scroll down through history.
     {
         "keys": ["down"],
         "command": "i_opener_cycle_history",
         "context": [{"key": "i_opener"}],
         "args": {"direction": "down"}
+    },
+
+    // Scroll up through folder list.
+    {
+        "keys": ["ctrl+up"],
+        "command": "i_opener_folder_list",
+        "context": [{"key": "i_opener"}],
+        "args": {"operation": "scroll_up"}
+    },
+
+    // Scroll down through folder list.
+    {
+        "keys": ["ctrl+down"],
+        "command": "i_opener_folder_list",
+        "context": [{"key": "i_opener"}],
+        "args": {"operation": "scroll_down"}
+    },
+
+    // Show user's Home folder.
+    {
+        "keys": ["ctrl+h"],
+        "command": "i_opener_folder_list",
+        "context": [{"key": "i_opener"}],
+        "args": {"operation": "show_home_folder"}
+    },
+
+    // Show the folder of the current File.
+    {
+        "keys": ["ctrl+f"],
+        "command": "i_opener_folder_list",
+        "context": [{"key": "i_opener"}],
+        "args": {"operation": "show_file_folder"}
+    },
+
+    // Show the current Project folders.
+    {
+        "keys": ["ctrl+p"],
+        "command": "i_opener_folder_list",
+        "context": [{"key": "i_opener"}],
+        "args": {"operation": "show_project_folders"}
+    },
+
+    // Show the User defined folders; set by the "folders" setting.
+    {
+        "keys": ["ctrl+u"],
+        "command": "i_opener_folder_list",
+        "context": [{"key": "i_opener"}],
+        "args": {"operation": "show_user_folders"}
+    },
+
+    // Show All the folders; set by the "folder_sequence" setting.
+    {
+        "keys": ["ctrl+a"],
+        "command": "i_opener_folder_list",
+        "context": [{"key": "i_opener"}],
+        "args": {"operation": "show_folder_sequence_folders"}
     }
-    ////////////////////////////////////////////////////////////////////////////
 ]
