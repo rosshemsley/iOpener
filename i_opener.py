@@ -44,6 +44,8 @@ def is_sublime_text_2():
 def is_sublime_text_3():
     return 3000 <= int(sublime.version()) <= 3999
 
+def is_sublime_text_4():
+    return 4000 <= int(sublime.version()) <= 4999
 
 def get_completion(path):
     """
@@ -332,8 +334,8 @@ class iOpenerCommand(sublime_plugin.WindowCommand):
     input_panel  = None
 
     def run(self):
-        if not (is_sublime_text_2() or is_sublime_text_3()):
-            print("iOpener plugin is only for Sublime Text v2 and v3.")
+        if not (is_sublime_text_2() or is_sublime_text_3() or is_sublime_text_4()):
+            print("iOpener plugin is only for Sublime Text v2, v3 and v4.")
         else:
             load_settings()
             iOpenerCommand.input_panel = iOpenerPathInput()
