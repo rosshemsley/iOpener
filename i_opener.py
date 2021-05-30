@@ -37,12 +37,12 @@ def load_settings():
     HISTORY_ENTRIES = settings.get('history_entries')
 
 
+def is_sublime_text_1():
+    return int(sublime.version()) < 2000
+
+
 def is_sublime_text_2():
     return 2000 <= int(sublime.version()) <= 2999
-
-
-def is_sublime_text_3():
-    return 3000 <= int(sublime.version()) <= 3999
 
 
 def get_completion(path):
@@ -332,7 +332,7 @@ class iOpenerCommand(sublime_plugin.WindowCommand):
     input_panel  = None
 
     def run(self):
-        if not (is_sublime_text_2() or is_sublime_text_3()):
+        if is_sublime_text_1():
             print("iOpener plugin is only for Sublime Text v2 and v3.")
         else:
             load_settings()
