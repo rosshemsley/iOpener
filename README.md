@@ -36,3 +36,14 @@ Installation is easiest using Package Control. In the Command Pallette, select
 Bugs
 ----
 Bugs can be reported on GitHub, https://github.com/rosshemsley/iOpener.
+
+
+Development
+-----------
+
+Run unit test with
+
+```bash
+pip install tox
+tox
+````

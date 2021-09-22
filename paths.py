@@ -1,5 +1,5 @@
-from os.path import isdir, isfile, expanduser, split, relpath, join, commonprefix, normpath
-from os      import listdir, sep, makedirs
+from os.path import isdir, expanduser, split, relpath, join, commonprefix
+from os import listdir, sep
 
 
 HOME_DIRECTORY = '~'
@@ -12,7 +12,7 @@ def directory_listing_with_slahes(path):
     output = []
 
     for filename in listdir(path):
-        if isdir(join(path,filename)):
+        if isdir(join(path, filename)):
             output.append(filename + sep)
         else:
             output.append(filename)
