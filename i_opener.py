@@ -5,9 +5,10 @@ Licensed under GPL V2.
 Written by Ross Hemsley and other collaborators 2013.
 """
 
-import sublime, sublime_plugin, time
-from os.path import isdir, isfile, expanduser, split, relpath, join, commonprefix, normpath
-from os      import listdir, sep, makedirs
+import sublime
+import sublime_plugin
+from os.path import isdir, isfile, expanduser, split, join
+from os import listdir, sep, makedirs
 
 from .matching import complete_path, COMPLETION_TYPE, get_matches
 from .paths import get_current_directory, directory_listing_with_slahes
@@ -21,6 +22,7 @@ STATUS_MESSAGES = {
     COMPLETION_TYPE.NoMatch: 'No match',
     COMPLETION_TYPE.Complete: None,
 }
+
 
 def load_settings():
     # We set these globals.
@@ -44,8 +46,10 @@ def is_sublime_text_2():
 def is_sublime_text_3():
     return 3000 <= int(sublime.version()) <= 3999
 
+
 def is_sublime_text_4():
     return 4000 <= int(sublime.version()) <= 4999
+
 
 def get_completion(path):
     """
@@ -61,7 +65,9 @@ def get_completion(path):
     directory_listing = listdir(expanduser(directory))
     new_filename, completion_type = complete_path(filename, directory_listing, CASE_SENSITIVE)
 
-    if new_filename != '' and isdir(expanduser(join(directory, new_filename))) and completion_type != COMPLETION_TYPE.CompleteButNotUnique:
+    if (new_filename != '' and
+            isdir(expanduser(join(directory, new_filename))) and
+            completion_type != COMPLETION_TYPE.CompleteButNotUnique):
         new_filename += sep
 
     return join(directory, new_filename), completion_type
@@ -90,7 +96,7 @@ class iOpenerPathInput():
 
         # Store default at end of history cache and 'select' it.
         self.history_cache.append(path)
-        self.history_index = len(self.history_cache)-1
+        self.history_index = len(self.history_cache) - 1
 
         self.view          = active_window.show_input_panel(
             "Find file: ",
@@ -100,7 +106,7 @@ class iOpenerPathInput():
             self.cancel
         )
 
-    def update(self,text):
+    def update(self, text):
         """
         If the user updates the input, reset the 'failed completion' flag.
         """
@@ -115,7 +121,7 @@ class iOpenerPathInput():
         if self.history_index < 0:
             sublime.status_message("Reached start of history")
             self.history_index = 0
-        self.set_text( self.history_cache [ self.history_index] )
+        self.set_text(self.history_cache[self.history_index])
 
     def goto_next_history(self):
         # Temporarily store any changes in cache, as bash does.
@@ -123,15 +129,15 @@ class iOpenerPathInput():
         self.history_index += 1
         if self.history_index == len(self.history_cache):
             sublime.status_message("Reached end of history")
-            self.history_index = len(self.history_cache)-1
-        self.set_text( self.history_cache [ self.history_index] )
+            self.history_index = len(self.history_cache) - 1
+        self.set_text(self.history_cache[self.history_index])
 
-    def add_to_history(self,path):
+    def add_to_history(self, path):
         file_history, history_settings = self.get_history()
 
         # Trim the history to the correct length and add latest entry.
         if HISTORY_ENTRIES > 1:
-            file_history = file_history[-HISTORY_ENTRIES+1:]
+            file_history = file_history[-HISTORY_ENTRIES + 1:]
             file_history.append(path)
         elif HISTORY_ENTRIES == 1:
             file_history = [path]
@@ -149,7 +155,7 @@ class iOpenerPathInput():
         if not file_history:
             file_history = []
         else:
-            file_history = file_history[ -HISTORY_ENTRIES :]
+            file_history = file_history[-HISTORY_ENTRIES:]
         return file_history, history_settings
 
     def cancel(self):
@@ -182,17 +188,22 @@ class iOpenerPathInput():
         filename  = ""
 
         # If the user enters a path without a filename.
-        if path[-1] == sep:  directory = path
-        else:                directory,filename = split(path)
+        if path[-1] == sep:
+            directory = path
+        else:
+            directory, filename = split(path)
 
         # Path doesn't exist, ask the user if they want to create it.
         if not isdir(directory):
-            create = sublime.ok_cancel_dialog("The path you entered does not exist, create it?",
-                                              "Yes")
+            create = sublime.ok_cancel_dialog(
+                "The path you entered does not exist, create it?",
+                "Yes"
+            )
             if not create:
                 return
             else:
-                try: makedirs(directory)
+                try:
+                    makedirs(directory)
                 except OSError as e:
                     sublime.error_message("Failed to create path with error: " + str(e))
                     return
@@ -216,7 +227,7 @@ class iOpenerPathInput():
         else:
             # If file doesn't exist, add a message in the status bar.
             if not isfile(path):
-                sublime.status_message("Created new buffer '"+filename+"'")
+                sublime.status_message("Created new buffer '{}'".format(filename))
             sublime.active_window().open_file(path)
         iOpenerCommand.input_panel = None
 
@@ -282,9 +293,10 @@ class iOpenerEventListener(sublime_plugin.EventListener):
     commands.
     """
     def on_query_context(self, view, key, operator, operand, match_all):
-        return (key                                   ==  'i_opener'
-            and iOpenerCommand.input_panel            !=  None
-            and iOpenerCommand.input_panel.view.id()  ==  view.id()
+        return (
+            key == 'i_opener' and
+            iOpenerCommand.input_panel is not None and
+            iOpenerCommand.input_panel.view.id() == view.id()
         )
 
 
@@ -293,8 +305,10 @@ class iOpenerUpdateCommand(sublime_plugin.TextCommand):
     The edit command used for editing the text in the input panel.
     """
     def run(self, edit, append, text):
-        if append: self.view.insert(edit, self.view.size(), text)
-        else: self.view.replace(edit, sublime.Region(0,self.view.size()), text)
+        if append:
+            self.view.insert(edit, self.view.size(), text)
+        else:
+            self.view.replace(edit, sublime.Region(0, self.view.size()), text)
 
 
 class iOpenerCompleteCommand(sublime_plugin.WindowCommand):
@@ -321,8 +335,10 @@ class iOpenerCycleHistoryCommand(sublime_plugin.WindowCommand):
     Receive requests to cycle history.
     """
     def run(self, direction):
-        if   direction == "up":   iOpenerCommand.input_panel.goto_prev_history()
-        elif direction == "down": iOpenerCommand.input_panel.goto_next_history()
+        if direction == "up":
+            iOpenerCommand.input_panel.goto_prev_history()
+        elif direction == "down":
+            iOpenerCommand.input_panel.goto_next_history()
 
 
 class iOpenerCommand(sublime_plugin.WindowCommand):

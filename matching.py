@@ -1,7 +1,5 @@
 from unittest import TestCase
-
-from os.path import isdir, isfile, expanduser, split, relpath, join, commonprefix, normpath
-from os      import listdir, sep, makedirs
+from os.path import commonprefix
 
 
 class COMPLETION_TYPE:
@@ -73,12 +71,12 @@ def lcs(A, B):
     result = ""
     x, y = len(A), len(B)
     while x != 0 and y != 0:
-        if lengths[x][y] == lengths[x-1][y]:
+        if lengths[x][y] == lengths[x - 1][y]:
             x -= 1
-        elif lengths[x][y] == lengths[x][y-1]:
+        elif lengths[x][y] == lengths[x][y - 1]:
             y -= 1
         else:
-            result = A[x-1] + result
+            result = A[x - 1] + result
             x -= 1
             y -= 1
     return result
