@@ -1,0 +1,5 @@
+iOpener is back!
+
+- Sublime text 4 Support
+- Fix KeyError when adding folder to empty project
+- Fix tab autocomplete to work more like bash

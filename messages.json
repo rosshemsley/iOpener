@@ -1,3 +1,4 @@
 {
-    "install": "RELEASE_NOTES.md",
+    "install": "message/RELEASE_NOTES.md",
+    "3.0.0": "messages/2.31.0.txt"
 }
